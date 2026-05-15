@@ -77,23 +77,25 @@ Register as an alias in `bootstrap/app.php` (Laravel 11+) and use as `feature.or
 
 ## Per-controller checks instead
 
-Sometimes a middleware is too coarse. You want to gate one method, not a route. Inject the manager:
+Sometimes a middleware is too coarse. You want to gate one method, not a route. Use the facade:
 
 ```php
+use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
+
 final class DashboardController
 {
     public function __construct(
-        private readonly FeatureFlagManager $manager,
         private readonly FeatureScopeResolver $scope,
     ) {}
 
     public function show(Request $request)
     {
-        if (! $this->manager->isEnabled(AppFeature::NewDashboard, $this->scope->resolve($request))) {
-            return view('dashboard.legacy');
-        }
+        $scopeId = $this->scope->resolve($request);
 
-        return view('dashboard.new');
+        return FeatureFlag::isEnabled(AppFeature::NewDashboard, $scopeId)
+            ? view('dashboard.new')
+            : view('dashboard.legacy');
     }
 }
 ```
