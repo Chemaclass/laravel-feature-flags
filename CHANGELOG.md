@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-05-15
+
 ### Added
 
 - `FeatureFlagManager` + `FeatureFlag` facade.
@@ -18,4 +20,5 @@
 - Docs under `docs/`; CI matrix on PHP 8.3/8.4 × Laravel 11/12.
 
 [Unreleased]: https://github.com/Chemaclass/laravel-feature-flags/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Chemaclass/laravel-feature-flags/releases/tag/v0.1.0
 [0.1.0]: https://github.com/Chemaclass/laravel-feature-flags/releases/tag/v0.1.0
