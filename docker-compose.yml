@@ -9,11 +9,18 @@ services:
     volumes:
       - .:/app
       - composer-cache:/root/.composer/cache
+      - workbench-db:/app/workbench/laravel/database
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
       DB_CONNECTION: sqlite
     working_dir: /app
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/admin/feature-flags"]
+      interval: 5s
+      timeout: 3s
+      start_period: 20s
+      retries: 20
 
   test:
     build:
@@ -25,7 +32,7 @@ services:
       - .:/app
       - composer-cache:/root/.composer/cache
     working_dir: /app
-    command: ["sh", "-c", "composer install --prefer-dist --no-progress && vendor/bin/pest"]
+    command: ["sh", "-c", "vendor/bin/pest"]
 
   stan:
     build:
@@ -37,7 +44,8 @@ services:
       - .:/app
       - composer-cache:/root/.composer/cache
     working_dir: /app
-    command: ["sh", "-c", "composer install --prefer-dist --no-progress && vendor/bin/phpstan analyse"]
+    command: ["sh", "-c", "vendor/bin/phpstan analyse --memory-limit=512M"]
 
 volumes:
   composer-cache:
+  workbench-db:
