@@ -19,6 +19,17 @@
 @endphp
 <!DOCTYPE html>
 <html lang="en" class="h-full">
+<script>
+    // Apply theme before paint to avoid flash.
+    // Default = follow OS. User toggle in navbar persists an override.
+    try {
+        const stored = localStorage.getItem('ff-theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (stored === 'dark' || (stored === null && systemDark)) {
+            document.documentElement.classList.add('dark');
+        }
+    } catch (_) {}
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,7 +41,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'media',
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -49,7 +60,7 @@
         .switch.on { background: #10b981; }
         .switch.on .knob { transform: translateX(18px); }
         .switch.off { background: #d4d4d8; }
-        @media (prefers-color-scheme: dark) { .switch.off { background: #3f3f46; } }
+        .dark .switch.off { background: #3f3f46; }
         .toast-enter { animation: slideIn .25s ease-out forwards; }
         .toast-leave { animation: slideOut .25s ease-in forwards; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -62,24 +73,31 @@
         input:focus { outline: none; box-shadow: 0 0 0 3px rgba(99, 102, 241, .2); }
     </style>
 </head>
-<body class="min-h-full bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 font-sans antialiased">
+<body class="min-h-full bg-gradient-to-b from-slate-50 to-white text-slate-900 dark:from-zinc-950 dark:to-zinc-950 dark:text-zinc-100 font-sans antialiased">
 
-<header class="sticky top-0 z-30 backdrop-blur-xl bg-white/70 dark:bg-zinc-950/70 border-b border-zinc-200/60 dark:border-zinc-800/60">
+<header class="sticky top-0 z-30 backdrop-blur-xl bg-white/80 dark:bg-zinc-950/70 border-b border-slate-200/70 dark:border-zinc-800/60">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 grid place-items-center text-white shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 grid place-items-center text-white shadow-md shadow-indigo-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
             </div>
             <div>
                 <h1 class="text-base font-semibold tracking-tight">Feature Flags</h1>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $entriesByKey->count() }} unique keys · {{ $total }} rows total</p>
+                <p class="text-xs text-slate-500 dark:text-zinc-400">{{ $entriesByKey->count() }} unique keys · {{ $total }} rows total</p>
             </div>
         </div>
-        <button type="button" data-toggle="#new-flag"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium hover:opacity-90 transition shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New flag
-        </button>
+        <div class="flex items-center gap-2">
+            <button type="button" id="theme-toggle" title="Toggle theme"
+                    class="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition">
+                <svg class="theme-icon-light" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <svg class="theme-icon-dark hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <button type="button" data-toggle="#new-flag"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium hover:opacity-90 transition shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New flag
+            </button>
+        </div>
     </div>
 </header>
 
@@ -283,6 +301,35 @@
         const t = e.target.closest('[data-toggle]');
         if (!t) return;
         document.querySelector(t.dataset.toggle)?.classList.toggle('hidden');
+    });
+
+    // --- Theme toggle ---
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('theme-toggle');
+    const iconSun = themeBtn?.querySelector('.theme-icon-light');
+    const iconMoon = themeBtn?.querySelector('.theme-icon-dark');
+
+    const applyIcons = () => {
+        const isDark = html.classList.contains('dark');
+        iconSun?.classList.toggle('hidden', !isDark);  // sun shown when dark (click to go light)
+        iconMoon?.classList.toggle('hidden', isDark);
+    };
+    applyIcons();
+
+    themeBtn?.addEventListener('click', () => {
+        const willBeDark = !html.classList.contains('dark');
+        html.classList.toggle('dark', willBeDark);
+        try { localStorage.setItem('ff-theme', willBeDark ? 'dark' : 'light'); } catch (_) {}
+        applyIcons();
+    });
+
+    // Track OS preference changes when the user has not overridden.
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        try {
+            if (localStorage.getItem('ff-theme') !== null) return;
+        } catch (_) {}
+        html.classList.toggle('dark', e.matches);
+        applyIcons();
     });
 
     const submit = async (form) => {
