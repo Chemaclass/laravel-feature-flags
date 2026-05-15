@@ -3,7 +3,7 @@
     "description": "Agnostic feature flag management for Laravel with optional admin UI and per-scope overrides.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["laravel", "feature-flags", "toggles", "multi-tenant"],
+    "keywords": ["laravel", "feature-flags", "toggles", "scoped"],
     "authors": [
         {
             "name": "Chemaclass",
@@ -30,7 +30,10 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Chemaclass\\FeatureFlags\\Tests\\": "tests/"
+            "Chemaclass\\FeatureFlags\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
         }
     },
     "extra": {
@@ -48,7 +51,16 @@
     },
     "scripts": {
         "test": "pest",
-        "stan": "phpstan analyse"
+        "test:unit": "pest --testsuite=Unit",
+        "test:feature": "pest --testsuite=Feature",
+        "stan": "phpstan analyse",
+        "serve": "@php vendor/bin/testbench serve --host=0.0.0.0",
+        "build": [
+            "@php vendor/bin/testbench workbench:build --ansi"
+        ],
+        "post-autoload-dump": [
+            "@php vendor/bin/testbench package:discover --ansi"
+        ]
     },
     "minimum-stability": "dev",
     "prefer-stable": true

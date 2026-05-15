@@ -1,0 +1,29 @@
+providers:
+  - Chemaclass\FeatureFlags\FeatureFlagsServiceProvider
+
+migrations:
+  - workbench/database/migrations
+
+seeders:
+  - Workbench\Database\Seeders\DatabaseSeeder
+
+workbench:
+  start: '/admin/feature-flags'
+  user: 'demo@example.com'
+  guard: 'web'
+  install: true
+  welcome: true
+  discovers:
+    web: true
+    api: false
+    commands: false
+    components: false
+    views: true
+  build:
+    - asset-publish
+    - create-sqlite-db
+    - db-wipe
+  assets:
+    - feature-flags-config
+    - feature-flags-views
+  sync: []
