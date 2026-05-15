@@ -58,6 +58,8 @@ final class RedisFeatureFlagRepository implements FeatureFlagRepository
     public function findByKeyAndScope(string $key, ?string $scopeId): ?FeatureTransfer { /* ... */ }
     public function create(array $data): FeatureTransfer { /* ... */ }
     public function updateOrCreate(array $attributes, array $values): FeatureTransfer { /* ... */ }
+    public function update(string $id, array $values): ?FeatureTransfer { /* ... */ }
+    public function delete(string $id): bool { /* ... */ }
     public function toggleValue(string $id): bool { /* ... */ }
     public function toggleDevByKey(string $key): bool { /* ... */ }
 }
@@ -75,7 +77,22 @@ public function register(): void
 }
 ```
 
-The package's `FeatureFlagManager` only depends on the contract. Your binding takes over automatically.
+The package's `FeatureFlagManager` (and therefore the `FeatureFlag` facade) only depends on the contract. Your binding takes over automatically.
+
+The full contract has nine methods:
+
+```php
+public function isEnabled(string $key, ?string $scopeId = null): bool;
+public function listForScope(?string $scopeId): array;
+public function findById(string $id): ?FeatureTransfer;
+public function findByKeyAndScope(string $key, ?string $scopeId): ?FeatureTransfer;
+public function create(array $data): FeatureTransfer;
+public function updateOrCreate(array $attributes, array $values): FeatureTransfer;
+public function update(string $id, array $values): ?FeatureTransfer;
+public function delete(string $id): bool;
+public function toggleValue(string $id): bool;
+public function toggleDevByKey(string $key): bool;
+```
 
 ## Caching the Eloquent repository
 
