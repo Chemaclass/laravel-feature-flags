@@ -2,7 +2,8 @@
 # release.sh — cut a new tagged release.
 #
 # Usage:
-#   ./release.sh 0.2.0
+#   ./release.sh                        # default: bump next minor from latest tag
+#   ./release.sh 0.2.0                  # explicit version
 #   ./release.sh 0.2.0 --dry-run        # show what would happen, change nothing
 #   ./release.sh 0.2.0 --skip-tests     # skip pest + phpstan + pint (not recommended)
 #   ./release.sh 0.2.0 --skip-gh        # do not create the GitHub release
@@ -35,22 +36,38 @@ require_cmd() {
 }
 
 # ---------- args ----------
-VERSION="${1:-}"
+VERSION=""
 DRY_RUN=0
 SKIP_TESTS=0
 SKIP_GH=0
 
-shift || true
 for arg in "$@"; do
     case "$arg" in
         --dry-run)    DRY_RUN=1 ;;
         --skip-tests) SKIP_TESTS=1 ;;
         --skip-gh)    SKIP_GH=1 ;;
-        *) die "Unknown flag: $arg" ;;
+        -*)           die "Unknown flag: $arg" ;;
+        *)
+            [[ -z "$VERSION" ]] || die "Multiple version arguments given: '$VERSION' and '$arg'"
+            VERSION="$arg"
+            ;;
     esac
 done
 
-[[ -n "$VERSION" ]] || die "Usage: ./release.sh <version> [--dry-run] [--skip-tests] [--skip-gh]"
+# Default: bump next minor from the latest vX.Y.Z tag (0.1.0 if no tags).
+if [[ -z "$VERSION" ]]; then
+    LATEST_TAG="$(git tag --list 'v*' --sort=-v:refname | head -n1)"
+    if [[ -z "$LATEST_TAG" ]]; then
+        VERSION="0.1.0"
+        blue "▶ No existing tag found, defaulting to $VERSION"
+    else
+        LATEST_VERSION="${LATEST_TAG#v}"
+        [[ "$LATEST_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]] \
+            || die "Latest tag '$LATEST_TAG' is not parseable semver."
+        VERSION="${BASH_REMATCH[1]}.$((BASH_REMATCH[2] + 1)).0"
+        blue "▶ No version given, bumping next minor: $LATEST_TAG → v$VERSION"
+    fi
+fi
 
 # Strip leading 'v' if the user passed it.
 VERSION="${VERSION#v}"
