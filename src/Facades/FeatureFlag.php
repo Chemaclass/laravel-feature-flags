@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool toggleValue(string $id)
  * @method static bool toggleDevByKey(string $key)
  *
- * @see \Chemaclass\FeatureFlags\Manager\FeatureFlagManager
+ * @see FeatureFlagManager
  */
 final class FeatureFlag extends Facade
 {
