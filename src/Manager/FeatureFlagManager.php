@@ -56,6 +56,19 @@ final readonly class FeatureFlagManager
         return $this->repository->updateOrCreate($attributes, $values);
     }
 
+    /**
+     * @param  array<string, mixed>  $values
+     */
+    public function update(string $id, array $values): ?FeatureTransfer
+    {
+        return $this->repository->update($id, $values);
+    }
+
+    public function delete(string $id): bool
+    {
+        return $this->repository->delete($id);
+    }
+
     public function toggleValue(string $id): bool
     {
         return $this->repository->toggleValue($id);

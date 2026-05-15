@@ -30,6 +30,13 @@ interface FeatureFlagRepository
      */
     public function updateOrCreate(array $attributes, array $values): FeatureTransfer;
 
+    /**
+     * @param  array<string, mixed>  $values
+     */
+    public function update(string $id, array $values): ?FeatureTransfer;
+
+    public function delete(string $id): bool;
+
     public function toggleValue(string $id): bool;
 
     public function toggleDevByKey(string $key): bool;

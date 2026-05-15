@@ -85,6 +85,24 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
         return FeatureTransfer::fromModel($m);
     }
 
+    public function update(string $id, array $values): ?FeatureTransfer
+    {
+        $m = $this->modelClass::find($id);
+        if ($m === null) {
+            return null;
+        }
+
+        $m->fill($values);
+        $m->save();
+
+        return FeatureTransfer::fromModel($m);
+    }
+
+    public function delete(string $id): bool
+    {
+        return (bool) $this->modelClass::query()->whereKey($id)->delete();
+    }
+
     public function toggleValue(string $id): bool
     {
         /** @var FeatureFlag $m */

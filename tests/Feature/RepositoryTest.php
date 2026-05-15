@@ -144,3 +144,25 @@ it('toggleDevByKey flips is_dev for every row with that key', function (): void 
 it('toggleDevByKey returns false when key has no rows', function (): void {
     expect($this->repo->toggleDevByKey('nothing-here'))->toBeFalse();
 });
+
+it('update modifies the given fields and returns the DTO', function (): void {
+    $dto = $this->repo->create(['key' => 'u', 'scope_id' => null, 'value' => false, 'hint' => 'before']);
+
+    $updated = $this->repo->update($dto->id, ['hint' => 'after', 'value' => true, 'is_dev' => true]);
+
+    expect($updated)->not->toBeNull()
+        ->and($updated->hint)->toBe('after')
+        ->and($updated->value)->toBeTrue()
+        ->and($updated->isDev)->toBeTrue();
+});
+
+it('update returns null when the row does not exist', function (): void {
+    expect($this->repo->update('01ZZZZZZZZZZZZZZZZZZZZZZZZ', ['hint' => 'x']))->toBeNull();
+});
+
+it('delete removes the row and returns true', function (): void {
+    $dto = $this->repo->create(['key' => 'd', 'scope_id' => null, 'value' => true]);
+
+    expect($this->repo->delete($dto->id))->toBeTrue()
+        ->and($this->repo->findById($dto->id))->toBeNull();
+});
