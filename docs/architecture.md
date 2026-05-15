@@ -8,7 +8,11 @@ A quick mental model of the moving pieces.
 ┌──────────────────────────────────────────────────────────┐
 │  Your app (controllers, jobs, blade, middleware)         │
 └─────────────────────────┬────────────────────────────────┘
-                          │ depends on
+                          │
+                ┌─────────▼──────────────┐
+                │ FeatureFlag (facade)   │  Optional sugar
+                └─────────┬──────────────┘
+                          │ resolves
                           ▼
                 ┌───────────────────────┐
                 │  FeatureFlagManager   │  Public API (final readonly)
@@ -49,6 +53,7 @@ The **scope id** is an opaque string. The library has no opinion about what it r
 | Path | Role |
 |------|------|
 | `src/Manager/FeatureFlagManager.php` | Public API used by your app code |
+| `src/Facades/FeatureFlag.php` | Static-call sugar over the manager |
 | `src/Contracts/FeatureFlagRepository.php` | Storage contract. Implement to swap backend |
 | `src/Contracts/FeatureScopeResolver.php` | Per-request scope contract |
 | `src/Contracts/FeatureKey.php` | Type-safe key contract for enums |
@@ -107,6 +112,6 @@ Three small interfaces (`FeatureFlagRepository`, `FeatureScopeResolver`, `Featur
 
 `boot()`:
 - loads migrations + views from package paths
-- registers middleware alias
+- registers middleware alias (default `feature.enabled`)
 - conditionally loads admin routes
-- registers four publish tags (`config`, `migrations`, `views`, `routes`)
+- registers publish tags: `feature-flags` (all-in-one), `feature-flags-config`, `feature-flags-migrations`, `feature-flags-views`, `feature-flags-routes`
