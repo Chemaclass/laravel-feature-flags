@@ -2,13 +2,14 @@
 
 ## Inside this package
 
-Pest + Orchestra Testbench. Two suites: **Unit** (manager + repository internals) and **Feature** (HTTP, middleware, admin UI end-to-end).
+Pest + Orchestra Testbench. Two suites: **Unit** (manager + repository internals + facade) and **Feature** (HTTP, middleware, admin UI end-to-end).
 
 ```bash
 composer test          # all suites
 composer test:unit
 composer test:feature
-composer stan          # phpstan
+composer stan          # phpstan + larastan
+composer fmt:check     # pint --test
 ```
 
 Migrations run via Testbench's in-memory SQLite. See `tests/TestCase.php` and `tests/Pest.php`.
@@ -17,15 +18,15 @@ Migrations run via Testbench's in-memory SQLite. See `tests/TestCase.php` and `t
 
 ### Enable / disable flags in tests
 
-Just call the manager directly. It writes to the test DB:
+Use the facade. It writes to the test DB:
 
 ```php
-use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
 
 it('shows the new dashboard when flag enabled', function () {
-    app(FeatureFlagManager::class)->create([
-        'key' => 'new-dashboard',
-        'value' => true,
+    FeatureFlag::create([
+        'key'      => 'new-dashboard',
+        'value'    => true,
         'scope_id' => null,
     ]);
 
@@ -36,11 +37,11 @@ it('shows the new dashboard when flag enabled', function () {
 ### Scope overrides in tests
 
 ```php
-$manager->create(['key' => 'new-dashboard', 'value' => false, 'scope_id' => null]);
-$manager->create(['key' => 'new-dashboard', 'value' => true,  'scope_id' => 'group-A']);
+FeatureFlag::create(['key' => 'new-dashboard', 'value' => false, 'scope_id' => null]);
+FeatureFlag::create(['key' => 'new-dashboard', 'value' => true,  'scope_id' => 'group-A']);
 
-expect($manager->isEnabled('new-dashboard', 'group-A'))->toBeTrue();
-expect($manager->isEnabled('new-dashboard'))->toBeFalse();
+expect(FeatureFlag::isEnabled('new-dashboard', 'group-A'))->toBeTrue();
+expect(FeatureFlag::isEnabled('new-dashboard'))->toBeFalse();
 ```
 
 ### Faking the repository
@@ -53,6 +54,7 @@ use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 beforeEach(function () {
     $this->app->instance(FeatureFlagRepository::class, new class implements FeatureFlagRepository {
         private array $store = [];
+
         public function isEnabled(string $key, ?string $scopeId = null): bool {
             return $this->store["{$key}:{$scopeId}"] ?? $this->store["{$key}:"] ?? false;
         }
@@ -87,24 +89,24 @@ $this->app->instance(FeatureScopeResolver::class, new class implements FeatureSc
 Drop this in `tests/` for terser tests:
 
 ```php
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
+
 trait WithFeatureFlags
 {
     protected function enableFlag(string $key, ?string $scopeId = null): void
     {
-        app(\Chemaclass\FeatureFlags\Manager\FeatureFlagManager::class)
-            ->updateOrCreate(
-                ['key' => $key, 'scope_id' => $scopeId],
-                ['value' => true],
-            );
+        FeatureFlag::updateOrCreate(
+            ['key' => $key, 'scope_id' => $scopeId],
+            ['value' => true],
+        );
     }
 
     protected function disableFlag(string $key, ?string $scopeId = null): void
     {
-        app(\Chemaclass\FeatureFlags\Manager\FeatureFlagManager::class)
-            ->updateOrCreate(
-                ['key' => $key, 'scope_id' => $scopeId],
-                ['value' => false],
-            );
+        FeatureFlag::updateOrCreate(
+            ['key' => $key, 'scope_id' => $scopeId],
+            ['value' => false],
+        );
     }
 }
 ```
@@ -116,17 +118,31 @@ trait WithFeatureFlags
 ```php
 Carbon::setTestNow('2026-11-28 12:00');
 
-$manager->create([
-    'key' => 'black-friday',
-    'value' => true,
-    'enabled_from' => '2026-11-27',
+FeatureFlag::create([
+    'key'           => 'black-friday',
+    'value'         => true,
+    'enabled_from'  => '2026-11-27',
     'enabled_until' => '2026-12-01',
 ]);
 
-expect($manager->isEnabled('black-friday'))->toBeTrue();
+expect(FeatureFlag::isEnabled('black-friday'))->toBeTrue();
 
 Carbon::setTestNow('2026-12-02 12:00');
-expect($manager->isEnabled('black-friday'))->toBeFalse();
+expect(FeatureFlag::isEnabled('black-friday'))->toBeFalse();
+```
+
+### Hitting the admin endpoints
+
+The admin routes are in the `web` middleware group (CSRF + session). Use Pest's `postJson` / `patchJson` / `deleteJson` plus `actingAs($user)`:
+
+```php
+$this->actingAs($user)
+    ->postJson('/admin/feature-flags', ['key' => 'x', 'value' => true])
+    ->assertOk();
+
+$this->actingAs($user)
+    ->patchJson("/admin/feature-flags/{$row->id}", ['hint' => 'new hint'])
+    ->assertOk();
 ```
 
 ## Next steps
