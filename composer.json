@@ -26,6 +26,7 @@
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.0",
         "orchestra/testbench": "^9.0|^10.0",
         "pestphp/pest": "^3.0",
         "pestphp/pest-plugin-laravel": "^3.0",
@@ -62,6 +63,8 @@
         "test:unit": "pest --testsuite=Unit",
         "test:feature": "pest --testsuite=Feature",
         "stan": "phpstan analyse",
+        "fmt": "pint",
+        "fmt:check": "pint --test",
         "serve": "@php vendor/bin/testbench serve --host=0.0.0.0",
         "build": [
             "@php vendor/bin/testbench workbench:build --ansi"
