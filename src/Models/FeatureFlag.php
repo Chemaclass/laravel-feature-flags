@@ -21,7 +21,7 @@ class FeatureFlag extends Model
 {
     use HasUlids;
 
-    /** @var array<int, string> */
+    /** @var list<string> */
     protected $fillable = [
         'key',
         'scope_id',

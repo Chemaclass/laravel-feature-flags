@@ -106,7 +106,7 @@ final class FeatureFlagController extends Controller
 
         $updated = $this->manager->update($id, ['is_dev' => ! $feature->isDev]);
 
-        return response()->json(['success' => true, 'isDev' => $updated?->isDev ?? false]);
+        return response()->json(['success' => true, 'isDev' => $updated !== null ? $updated->isDev : false]);
     }
 
     public function toggleDevByKey(string $key): JsonResponse
