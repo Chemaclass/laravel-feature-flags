@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
-use Chemaclass\FeatureFlags\Resolvers\UserTenantScopeResolver;
+use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
 
 return [
 
@@ -13,7 +13,7 @@ return [
 
     'scope' => [
         'column'   => 'scope_id',
-        'resolver' => UserTenantScopeResolver::class,
+        'resolver' => NullScopeResolver::class,
     ],
 
     'admin' => [

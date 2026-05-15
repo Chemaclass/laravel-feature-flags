@@ -9,7 +9,7 @@ use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
 use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 use Chemaclass\FeatureFlags\Repository\EloquentFeatureFlagRepository;
-use Chemaclass\FeatureFlags\Resolvers\UserTenantScopeResolver;
+use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
@@ -24,7 +24,7 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
 
         $this->app->singleton(FeatureScopeResolver::class, function ($app) {
             /** @var class-string<FeatureScopeResolver> $cls */
-            $cls = config('feature-flags.scope.resolver', UserTenantScopeResolver::class);
+            $cls = config('feature-flags.scope.resolver', NullScopeResolver::class);
 
             return $app->make($cls);
         });
