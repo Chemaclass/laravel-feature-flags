@@ -4,10 +4,17 @@
     "type": "library",
     "license": "MIT",
     "keywords": ["laravel", "feature-flags", "toggles", "scoped"],
+    "homepage": "https://github.com/Chemaclass/laravel-feature-flags",
+    "support": {
+        "issues": "https://github.com/Chemaclass/laravel-feature-flags/issues",
+        "source": "https://github.com/Chemaclass/laravel-feature-flags",
+        "docs": "https://github.com/Chemaclass/laravel-feature-flags/tree/main/docs"
+    },
     "authors": [
         {
             "name": "Chemaclass",
-            "email": "chemaclass@outlook.es"
+            "email": "chemaclass@outlook.es",
+            "homepage": "https://github.com/Chemaclass"
         }
     ],
     "require": {
