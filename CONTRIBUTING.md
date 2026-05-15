@@ -293,7 +293,7 @@ composer stan
 - All tests inherit from `Chemaclass\FeatureFlags\Tests\TestCase` automatically via `tests/Pest.php`.
 - Prefer `mock()` over `Mockery::mock()`.
 
-## Code style
+## Code conventions
 
 - PHP `^8.3`
 - `declare(strict_types=1);` at the top of every file
@@ -309,7 +309,27 @@ composer stan
 make stan
 ```
 
-PHPStan level 6 against `src/`. If you hit Eloquent magic-method errors, install [`larastan/larastan`](https://github.com/larastan/larastan) locally; it is not pinned as a dev dep but is recognized.
+PHPStan level 6 against `src/` with `larastan/larastan` enabled (pinned as a dev dep). Must report `No errors`.
+
+## Formatting
+
+```bash
+composer fmt           # apply Pint
+composer fmt:check     # CI-style check, fails on drift
+```
+
+Configured in `pint.json` with the `laravel` preset plus `declare_strict_types`, alpha-sorted imports, and class-import collapsing.
+
+## Releasing
+
+Cutting a release is a single command:
+
+```bash
+./release.sh 0.2.0           # full release
+./release.sh 0.2.0 --dry-run # preview, no changes
+```
+
+The script runs preflight (clean tree, on main, in sync with origin, tag free, CHANGELOG has notes), runs all quality gates, rewrites `CHANGELOG.md`, commits, tags, pushes, and creates the GitHub release with notes pulled from the changelog section. Requires `gh` CLI.
 
 ## Commits
 
