@@ -42,14 +42,14 @@ A quick mental model of the moving pieces.
 
 ```
 
-The **scope id** is an opaque string. The library has no opinion about what it represents — team id, region, cohort, user id, anything. See [scopes.md](scopes.md).
+The **scope id** is an opaque string. The library has no opinion about what it represents. Could be a team id, region, cohort, user id, anything. See [scopes.md](scopes.md).
 
 ## Files
 
 | Path | Role |
 |------|------|
 | `src/Manager/FeatureFlagManager.php` | Public API used by your app code |
-| `src/Contracts/FeatureFlagRepository.php` | Storage contract — implement to swap backend |
+| `src/Contracts/FeatureFlagRepository.php` | Storage contract. Implement to swap backend |
 | `src/Contracts/FeatureScopeResolver.php` | Per-request scope contract |
 | `src/Contracts/FeatureKey.php` | Type-safe key contract for enums |
 | `src/Repository/EloquentFeatureFlagRepository.php` | Default Eloquent-backed repo |

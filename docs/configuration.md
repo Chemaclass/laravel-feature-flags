@@ -35,11 +35,11 @@ Eloquent model class. Swap with your own subclass to add observers, casts, or re
 Column used for scope filtering. Defaults to `scope_id`. Only change if you also customize the migration.
 
 ### `scope.resolver`
-Class implementing `FeatureScopeResolver`. Resolves the current request's scope id — a free-form string that means whatever your app wants it to mean (team id, organization id, region code, A/B cohort, anything). Built-ins:
+Class implementing `FeatureScopeResolver`. Resolves the current request's scope id, a free-form string that means whatever your app wants it to mean (team id, organization id, region code, A/B cohort, anything). Built-ins:
 
 | Class | Behavior |
 |-------|----------|
-| `NullScopeResolver` (default) | Always returns `null` — global-only mode |
+| `NullScopeResolver` (default) | Always returns `null`. Global-only mode |
 | `UserTenantScopeResolver` | Example resolver that reads `$user->tenant->id` then falls back to `$user->tenant_id`. Opt-in. |
 
 See [scopes.md](scopes.md) for writing your own.

@@ -20,7 +20,7 @@ enum AppFeature: string implements FeatureKey
 }
 ```
 
-You can also pass raw strings everywhere — the enum is optional sugar.
+You can also pass raw strings everywhere. The enum is optional sugar.
 
 ## Check a flag
 
@@ -32,7 +32,7 @@ $manager = app(FeatureFlagManager::class);
 // Global check
 $manager->isEnabled(AppFeature::NewDashboard);
 
-// Scoped check — $scopeId is any string your app decides on
+// Scoped check. $scopeId is any string your app decides on
 // (team id, region code, cohort name, customer id, etc.)
 $manager->isEnabled(AppFeature::NewDashboard, $scopeId);
 
@@ -90,7 +90,7 @@ $transfer = $manager->findById($id);                       // ?FeatureTransfer
 $transfer = $manager->findByKeyAndScope('new-dashboard', $scopeId);
 ```
 
-`FeatureTransfer` is a read-only DTO — safe to return from APIs.
+`FeatureTransfer` is a read-only DTO, safe to return from APIs.
 
 ## Time windows
 
@@ -111,7 +111,7 @@ Outside the window, `isEnabled()` returns `false` even if `value = true`.
 
 ## Dev marker
 
-`is_dev = true` is a hint your app can use to hide a flag from non-engineering users or block production exposure. The package doesn't enforce anything — your code decides what `is_dev` means.
+`is_dev = true` is a hint your app can use to hide a flag from non-engineering users or block production exposure. The package doesn't enforce anything. Your code decides what `is_dev` means.
 
 Example: hide dev-only flags in the admin UI for non-admin users (customize the published Blade).
 

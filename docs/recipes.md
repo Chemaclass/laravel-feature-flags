@@ -1,6 +1,6 @@
 # Recipes
 
-Common patterns assembled from the building blocks. The `$scopeId` placeholder below is any string your app decides on — see [scopes.md](scopes.md).
+Common patterns assembled from the building blocks. The `$scopeId` placeholder below is any string your app decides on. See [scopes.md](scopes.md).
 
 ## Gradual rollout: enable for one scope, then more
 
@@ -165,7 +165,7 @@ Wire it via `feature-flags.model` config.
 
 ## Caching reads
 
-Wrap the repository — see [extending.md](extending.md#caching-the-eloquent-repository).
+Wrap the repository. See [extending.md](extending.md#caching-the-eloquent-repository).
 
 ## Route-aware scope picking
 

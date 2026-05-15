@@ -39,8 +39,8 @@ php artisan vendor:publish --tag=feature-flags-views
 Edit `resources/views/vendor/feature-flags/admin/index.blade.php`. The view uses the Tailwind CDN by default; swap for your stack as needed.
 
 Variables available in the view:
-- `$entriesByKey` — `Collection<string, Collection<FeatureFlag>>` grouped by `key`
-- `$total` — int row count
+- `$entriesByKey`: `Collection<string, Collection<FeatureFlag>>` grouped by `key`
+- `$total`: int row count
 
 ## Disable the bundled routes
 
@@ -66,7 +66,7 @@ require base_path('routes/feature-flags.php');
 
 ## Securing the UI
 
-The admin page can change behavior in production — gate it:
+The admin page can change behavior in production. Gate it:
 
 ```php
 // app/Providers/AuthServiceProvider.php

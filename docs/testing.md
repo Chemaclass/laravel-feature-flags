@@ -17,7 +17,7 @@ Migrations run via Testbench's in-memory SQLite. See `tests/TestCase.php` and `t
 
 ### Enable / disable flags in tests
 
-Just call the manager directly — it writes to the test DB:
+Just call the manager directly. It writes to the test DB:
 
 ```php
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
@@ -111,7 +111,7 @@ trait WithFeatureFlags
 
 ### Time-window tests
 
-`Carbon::setTestNow()` works as expected — the repository uses `now()`:
+`Carbon::setTestNow()` works as expected. The repository uses `now()`:
 
 ```php
 Carbon::setTestNow('2026-11-28 12:00');

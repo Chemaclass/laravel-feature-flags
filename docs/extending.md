@@ -75,7 +75,7 @@ public function register(): void
 }
 ```
 
-The package's `FeatureFlagManager` only depends on the contract — your binding takes over automatically.
+The package's `FeatureFlagManager` only depends on the contract. Your binding takes over automatically.
 
 ## Caching the Eloquent repository
 
@@ -119,7 +119,7 @@ $this->app->singleton(FeatureFlagRepository::class, function ($app) {
 2. Subclass `FeatureFlag` and add casts/fillable as needed.
 3. Update the published config to point at your model.
 
-The `FeatureTransfer` DTO is final — if you need extra fields exposed, expose them through your own DTO returned by your repository methods (still typed as `FeatureTransfer`), or skip the DTO and read your model directly.
+The `FeatureTransfer` DTO is final. If you need extra fields exposed, expose them through your own DTO returned by your repository methods (still typed as `FeatureTransfer`), or skip the DTO and read your model directly.
 
 ## Next steps
 

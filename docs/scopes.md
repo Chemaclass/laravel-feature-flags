@@ -1,6 +1,6 @@
 # Scope Resolvers
 
-A **scope** is whatever string id your app keys per-target flag overrides by. It is intentionally undefined by this library — pick any concept that fits your domain:
+A **scope** is whatever string id your app keys per-target flag overrides by. It is intentionally undefined by this library. Pick any concept that fits your domain:
 
 - a team id
 - an organization id
@@ -152,7 +152,7 @@ public function resolve(Request $request): ?string
 
 ## When the resolver returns `null`
 
-`isEnabled($key, null)` falls back to **global rows only** (rows where `scope_id IS NULL`). This is intentional — unauthenticated or scope-less requests still resolve flags via the global default.
+`isEnabled($key, null)` falls back to **global rows only** (rows where `scope_id IS NULL`). This is intentional. Unauthenticated or scope-less requests still resolve flags via the global default.
 
 ## Manually passing a scope id
 

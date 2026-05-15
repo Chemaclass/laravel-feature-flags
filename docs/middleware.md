@@ -77,7 +77,7 @@ Register as an alias in `bootstrap/app.php` (Laravel 11+) and use as `feature.or
 
 ## Per-controller checks instead
 
-Sometimes a middleware is too coarse — you want to gate one method, not a route. Inject the manager:
+Sometimes a middleware is too coarse. You want to gate one method, not a route. Inject the manager:
 
 ```php
 final class DashboardController

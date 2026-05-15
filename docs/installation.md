@@ -12,7 +12,7 @@
 composer require chemaclass/laravel-feature-flags
 ```
 
-The package auto-registers `FeatureFlagsServiceProvider` via `extra.laravel.providers` in `composer.json` — no manual provider wiring needed.
+The package auto-registers `FeatureFlagsServiceProvider` via `extra.laravel.providers` in `composer.json`. No manual provider wiring needed.
 
 ## Publish config
 
@@ -43,7 +43,7 @@ Schema:
 | `is_dev` | bool | Dev marker |
 | `enabled_from` | timestamp nullable | Window start |
 | `enabled_until` | timestamp nullable | Window end |
-| `created_at`/`updated_at` | timestamps | — |
+| `created_at`/`updated_at` | timestamps | - |
 
 Unique constraint: `(key, scope_id)`.
 
