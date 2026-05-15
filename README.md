@@ -1,5 +1,8 @@
 # laravel-feature-flags
 
+[![CI](https://github.com/Chemaclass/laravel-feature-flags/actions/workflows/ci.yml/badge.svg)](https://github.com/Chemaclass/laravel-feature-flags/actions/workflows/ci.yml)
+[![Packagist Version](https://img.shields.io/packagist/v/chemaclass/laravel-feature-flags.svg)](https://packagist.org/packages/chemaclass/laravel-feature-flags)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/chemaclass/laravel-feature-flags.svg)](https://packagist.org/packages/chemaclass/laravel-feature-flags)
 [![PHP](https://img.shields.io/badge/PHP-%5E8.3-777BB4?logo=php&logoColor=white)](composer.json)
 [![Laravel](https://img.shields.io/badge/Laravel-11.x%20%7C%2012.x-FF2D20?logo=laravel&logoColor=white)](composer.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -41,16 +44,21 @@ enum AppFeature: string implements FeatureKey
     public function key(): string { return $this->value; }
 }
 
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
+
 // Global check
-if (app(FeatureFlagManager::class)->isEnabled(AppFeature::NewDashboard)) {
+if (FeatureFlag::isEnabled(AppFeature::NewDashboard)) {
     // gated code
 }
 
 // Scoped check. $scopeId is whatever string your app uses
 // (team id, organization id, region code, cohort name, etc.)
-if (app(FeatureFlagManager::class)->isEnabled(AppFeature::NewDashboard, $scopeId)) {
+if (FeatureFlag::isEnabled(AppFeature::NewDashboard, $scopeId)) {
     // gated code
 }
+
+// Or resolve the manager directly if you prefer container injection
+app(FeatureFlagManager::class)->isEnabled(AppFeature::NewDashboard, $scopeId);
 ```
 
 Route guard:
@@ -81,6 +89,7 @@ Route::get('/dashboard', DashboardController::class)
 
 | Tag | What it publishes |
 |-----|-------------------|
+| `feature-flags` | All of the below in one shot |
 | `feature-flags-config` | `config/feature-flags.php` |
 | `feature-flags-migrations` | DB migration |
 | `feature-flags-views` | Blade admin view |
