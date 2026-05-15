@@ -2,61 +2,70 @@
 
 Common patterns assembled from the building blocks. The `$scopeId` placeholder below is any string your app decides on. See [scopes.md](scopes.md).
 
-## Gradual rollout: enable for one scope, then more
+All examples use the `FeatureFlag` facade. Substitute `app(FeatureFlagManager::class)` if you prefer container injection.
 
 ```php
-$manager->updateOrCreate(['key' => 'new-checkout', 'scope_id' => null],       ['value' => false]);
-$manager->updateOrCreate(['key' => 'new-checkout', 'scope_id' => 'group-A'],  ['value' => true]);
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
+```
+
+## Gradual rollout
+
+```php
+FeatureFlag::updateOrCreate(['key' => 'new-checkout', 'scope_id' => null],      ['value' => false]);
+FeatureFlag::updateOrCreate(['key' => 'new-checkout', 'scope_id' => 'group-A'], ['value' => true]);
 // later
-$manager->updateOrCreate(['key' => 'new-checkout', 'scope_id' => 'group-B'],  ['value' => true]);
+FeatureFlag::updateOrCreate(['key' => 'new-checkout', 'scope_id' => 'group-B'], ['value' => true]);
 // when ready globally
-$manager->updateOrCreate(['key' => 'new-checkout', 'scope_id' => null], ['value' => true]);
+FeatureFlag::updateOrCreate(['key' => 'new-checkout', 'scope_id' => null], ['value' => true]);
 ```
 
 ## Kill switch
 
 ```php
-// Global off; delete scope overrides so nothing can re-enable it accidentally
-$manager->updateOrCreate(['key' => 'risky-feature', 'scope_id' => null], ['value' => false]);
+FeatureFlag::updateOrCreate(['key' => 'risky-feature', 'scope_id' => null], ['value' => false]);
 DB::table('feature_flags')->where('key', 'risky-feature')->whereNotNull('scope_id')->delete();
 ```
 
-Or set `enabled_until = now()` to expire immediately.
+Or expire immediately:
+
+```php
+$row = FeatureFlag::findByKeyAndScope('risky-feature', null);
+FeatureFlag::update($row->id, ['enabled_until' => now()]);
+```
 
 ## Scheduled rollout
 
 ```php
-$manager->updateOrCreate(
+FeatureFlag::updateOrCreate(
     ['key' => 'holiday-banner', 'scope_id' => null],
     [
-        'value' => true,
+        'value'         => true,
         'enabled_from'  => '2026-12-20 00:00',
         'enabled_until' => '2026-12-27 23:59',
     ],
 );
 ```
 
-## Blade conditional
+## Blade directive
 
-Add a directive in a service provider:
+Register once in a service provider:
 
 ```php
 use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
-use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
 use Illuminate\Support\Facades\Blade;
 
 public function boot(): void
 {
     Blade::if('feature', function (string $key) {
-        $manager = app(FeatureFlagManager::class);
         $scope = app(FeatureScopeResolver::class)->resolve(request());
 
-        return $manager->isEnabled($key, $scope);
+        return FeatureFlag::isEnabled($key, $scope);
     });
 }
 ```
 
-Then in templates:
+Use in templates:
 
 ```blade
 @feature('new-dashboard')
@@ -68,19 +77,19 @@ Then in templates:
 
 ## Inertia share
 
-Share flag state with the frontend via Inertia middleware:
-
 ```php
+use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
+
 final class ShareFeatureFlags
 {
     public function __construct(
-        private readonly FeatureFlagManager $manager,
         private readonly FeatureScopeResolver $resolver,
     ) {}
 
     public function handle(Request $request, Closure $next)
     {
-        Inertia::share('flags', $this->manager->all($this->resolver->resolve($request)));
+        Inertia::share('flags', FeatureFlag::all($this->resolver->resolve($request)));
 
         return $next($request);
     }
@@ -99,9 +108,9 @@ if (flags['new-dashboard']) { /* ... */ }
 ```php
 final class HeavyExportCommand extends Command
 {
-    public function handle(FeatureFlagManager $manager): int
+    public function handle(): int
     {
-        if (! $manager->isEnabled('async-exports')) {
+        if (! FeatureFlag::isEnabled('async-exports')) {
             $this->warn('Disabled by feature flag.');
             return self::SUCCESS;
         }
@@ -118,9 +127,9 @@ final class GenerateReport implements ShouldQueue
 {
     public function __construct(public string $scopeId) {}
 
-    public function handle(FeatureFlagManager $manager): void
+    public function handle(): void
     {
-        if (! $manager->isEnabled('async-exports', $this->scopeId)) {
+        if (! FeatureFlag::isEnabled('async-exports', $this->scopeId)) {
             $this->release(60);
             return;
         }
@@ -129,13 +138,11 @@ final class GenerateReport implements ShouldQueue
 }
 ```
 
-## A/B cohort
-
-Use a stable hash as scope id:
+## A/B cohort with a stable hash
 
 ```php
 $cohort = 'cohort-'.(crc32((string) $user->id) % 2 === 0 ? 'A' : 'B');
-if ($manager->isEnabled('experiment-x', $cohort)) {
+if (FeatureFlag::isEnabled('experiment-x', $cohort)) {
     // variant
 }
 ```
@@ -169,8 +176,6 @@ Wrap the repository. See [extending.md](extending.md#caching-the-eloquent-reposi
 
 ## Route-aware scope picking
 
-Different routes need different scope strategies? Compose a route-aware resolver:
-
 ```php
 final class RouteAwareScopeResolver implements FeatureScopeResolver
 {
@@ -183,4 +188,14 @@ final class RouteAwareScopeResolver implements FeatureScopeResolver
         };
     }
 }
+```
+
+## Bulk cleanup of stale flags
+
+```php
+use Chemaclass\FeatureFlags\Models\FeatureFlag as Model;
+
+Model::query()
+    ->where('updated_at', '<', now()->subMonths(6))
+    ->each(fn ($row) => FeatureFlag::delete($row->id));
 ```
