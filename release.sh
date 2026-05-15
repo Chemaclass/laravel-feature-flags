@@ -175,9 +175,11 @@ awk -v version="$VERSION" '
 if [[ $DRY_RUN -eq 1 ]]; then
     yellow "DRY-RUN: would write the following CHANGELOG.md:"
     diff -u CHANGELOG.md "$NEW_CHANGELOG" || true
+    NOTES_SOURCE="$NEW_CHANGELOG"
 else
     mv "$NEW_CHANGELOG" CHANGELOG.md
     rm -f "$CHANGELOG_TMP"
+    NOTES_SOURCE="CHANGELOG.md"
 fi
 
 # ---------- extract release notes for gh ----------
@@ -186,7 +188,7 @@ awk -v version="$VERSION" '
     $0 ~ "^## \\[" version "\\]" { flag = 1; next }
     /^## \[/ && flag { exit }
     flag { print }
-' "${NEW_CHANGELOG:-CHANGELOG.md}" \
+' "$NOTES_SOURCE" \
   | sed '/./,$!d' \
   | awk 'NF { lines = lines $0 ORS; next } { lines = lines ORS } END { sub(/\n+$/, "", lines); print lines }' \
   > "$RELEASE_NOTES_FILE"
