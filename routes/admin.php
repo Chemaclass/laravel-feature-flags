@@ -15,7 +15,9 @@ Route::prefix($prefix)
     ->group(function (): void {
         Route::get('/', [FeatureFlagController::class, 'index'])->name('index');
         Route::post('/', [FeatureFlagController::class, 'store'])->name('store');
+        Route::patch('{id}', [FeatureFlagController::class, 'update'])->name('update');
         Route::post('{id}/toggle', [FeatureFlagController::class, 'toggle'])->name('toggle');
-        Route::post('toggle-dev/{key}', [FeatureFlagController::class, 'toggleDev'])->name('toggle-dev');
+        Route::post('{id}/toggle-dev', [FeatureFlagController::class, 'toggleDev'])->name('toggle-dev-row');
+        Route::post('toggle-dev/{key}', [FeatureFlagController::class, 'toggleDevByKey'])->name('toggle-dev');
         Route::delete('{id}', [FeatureFlagController::class, 'destroy'])->name('destroy');
     });

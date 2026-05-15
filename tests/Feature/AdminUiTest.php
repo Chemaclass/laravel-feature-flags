@@ -22,13 +22,69 @@ it('index renders all flags grouped by key', function (): void {
     $manager->create(['key' => 'alpha', 'scope_id' => 'org-1', 'value' => false]);
     $manager->create(['key' => 'beta',  'scope_id' => null,    'value' => false]);
 
-    $this->actingAs($this->user)
-        ->get('/admin/feature-flags')
-        ->assertOk()
+    $response = $this->actingAs($this->user)->get('/admin/feature-flags');
+
+    $response->assertOk()
         ->assertSee('alpha')
         ->assertSee('beta')
-        ->assertSee('org-1')
-        ->assertSee('3 entries');
+        ->assertSee('org-1');
+
+    $body = (string) $response->getContent();
+    expect($body)->toContain('2 unique keys');
+    expect($body)->toContain('3 rows total');
+});
+
+it('update changes hint via PATCH', function (): void {
+    $row = FeatureFlag::query()->create([
+        'key' => 'theta', 'scope_id' => null, 'value' => true, 'hint' => 'old',
+    ]);
+
+    $this->actingAs($this->user)
+        ->patchJson("/admin/feature-flags/{$row->id}", ['hint' => 'new hint'])
+        ->assertOk()
+        ->assertJsonPath('success', true);
+
+    expect($row->refresh()->hint)->toBe('new hint');
+});
+
+it('update sets enabled_from and enabled_until', function (): void {
+    $row = FeatureFlag::query()->create([
+        'key' => 'iota', 'scope_id' => null, 'value' => true,
+    ]);
+
+    $this->actingAs($this->user)
+        ->patchJson("/admin/feature-flags/{$row->id}", [
+            'enabled_from'  => '2026-01-01 00:00:00',
+            'enabled_until' => '2026-12-31 23:59:59',
+        ])
+        ->assertOk();
+
+    $row->refresh();
+    expect($row->enabled_from)->not->toBeNull();
+    expect($row->enabled_until)->not->toBeNull();
+});
+
+it('update returns 404 for missing flag', function (): void {
+    $this->actingAs($this->user)
+        ->patchJson('/admin/feature-flags/01ZZZZZZZZZZZZZZZZZZZZZZZZ', ['hint' => 'x'])
+        ->assertStatus(404);
+});
+
+it('toggle-dev (row) flips is_dev for a single row by id', function (): void {
+    $a = FeatureFlag::query()->create([
+        'key' => 'kappa', 'scope_id' => null, 'value' => true, 'is_dev' => false,
+    ]);
+    $b = FeatureFlag::query()->create([
+        'key' => 'kappa', 'scope_id' => 'org-1', 'value' => true, 'is_dev' => false,
+    ]);
+
+    $this->actingAs($this->user)
+        ->postJson("/admin/feature-flags/{$a->id}/toggle-dev")
+        ->assertOk()
+        ->assertJsonPath('isDev', true);
+
+    expect($a->refresh()->is_dev)->toBeTrue();
+    expect($b->refresh()->is_dev)->toBeFalse();
 });
 
 it('store creates a new flag', function (): void {

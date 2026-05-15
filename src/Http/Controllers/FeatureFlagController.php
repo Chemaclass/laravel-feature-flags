@@ -22,7 +22,11 @@ final class FeatureFlagController extends Controller
     {
         /** @var class-string<FeatureFlag> $modelCls */
         $modelCls = config('feature-flags.model', FeatureFlag::class);
-        $entries = $modelCls::query()->orderBy('key')->orderBy('scope_id')->get();
+        $entries = $modelCls::query()
+            ->orderBy('key')
+            ->orderByRaw('scope_id IS NULL DESC')
+            ->orderBy('scope_id')
+            ->get();
 
         return view('feature-flags::admin.index', [
             'entriesByKey' => $entries->groupBy('key'),
@@ -60,6 +64,32 @@ final class FeatureFlagController extends Controller
         return redirect()->back();
     }
 
+    public function update(Request $request, string $id): JsonResponse|RedirectResponse
+    {
+        $data = $request->validate([
+            'value'         => ['sometimes', 'boolean'],
+            'hint'          => ['sometimes', 'nullable', 'string'],
+            'is_dev'        => ['sometimes', 'boolean'],
+            'scope_id'      => ['sometimes', 'nullable', 'string'],
+            'enabled_from'  => ['sometimes', 'nullable', 'date'],
+            'enabled_until' => ['sometimes', 'nullable', 'date'],
+        ]);
+
+        $feature = $this->manager->update($id, $data);
+
+        if ($feature === null) {
+            return $request->wantsJson()
+                ? response()->json(['success' => false, 'message' => 'Not found'], 404)
+                : redirect()->back();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'id' => $feature->id]);
+        }
+
+        return redirect()->back();
+    }
+
     public function toggle(string $id): JsonResponse
     {
         $value = $this->manager->toggleValue($id);
@@ -67,19 +97,33 @@ final class FeatureFlagController extends Controller
         return response()->json(['success' => true, 'value' => $value]);
     }
 
-    public function toggleDev(string $key): JsonResponse
+    public function toggleDev(string $id): JsonResponse
+    {
+        $feature = $this->manager->findById($id);
+        if ($feature === null) {
+            return response()->json(['success' => false, 'message' => 'Not found'], 404);
+        }
+
+        $updated = $this->manager->update($id, ['is_dev' => ! $feature->isDev]);
+
+        return response()->json(['success' => true, 'isDev' => $updated?->isDev ?? false]);
+    }
+
+    public function toggleDevByKey(string $key): JsonResponse
     {
         $value = $this->manager->toggleDevByKey($key);
 
         return response()->json(['success' => true, 'isDev' => $value]);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse|RedirectResponse
     {
-        /** @var class-string<FeatureFlag> $modelCls */
-        $modelCls = config('feature-flags.model', FeatureFlag::class);
-        $modelCls::query()->whereKey($id)->delete();
+        $this->manager->delete($id);
 
-        return response()->json(['success' => true]);
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->back();
     }
 }
