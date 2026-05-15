@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FeatureFlagManager` public API with `isEnabled`, `all`, `findById`,
   `findByKeyAndScope`, `create`, `updateOrCreate`, `update`, `delete`,
   `toggleValue`, `toggleDevByKey`.
+- `FeatureFlag` facade as sugar over the manager.
 - `FeatureFlagRepository` contract with default Eloquent implementation
   (`EloquentFeatureFlagRepository`).
 - `FeatureScopeResolver` contract with two bundled resolvers:
@@ -28,13 +29,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dark mode toggle, and color-hashed scope badges.
 - `feature_flags` table migration: ULID id, key, scope_id, value, hint,
   is_dev, enabled_from, enabled_until, unique `(key, scope_id)`.
-- Publish tags: `feature-flags-config`, `feature-flags-migrations`,
-  `feature-flags-views`, `feature-flags-routes`.
+- Publish tags: `feature-flags` (all-in-one), `feature-flags-config`,
+  `feature-flags-migrations`, `feature-flags-views`,
+  `feature-flags-routes`.
 - Testbench workbench demo app with seeded flags and Docker setup
   (`docker compose up` / `make up`).
 - Full docs under `docs/` covering installation, configuration, usage,
   scopes, middleware, admin UI, extending, testing, recipes,
   architecture.
+- CI matrix over PHP 8.3/8.4 and Laravel 11.x/12.x (Pest, PHPStan with
+  larastan, Pint, composer validate).
 
 [Unreleased]: https://github.com/Chemaclass/laravel-feature-flags/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/Chemaclass/laravel-feature-flags/releases/tag/v0.1.0
