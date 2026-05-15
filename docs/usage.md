@@ -2,7 +2,7 @@
 
 ## Define flag keys with an enum
 
-The `FeatureKey` contract lets you keep keys type-safe and centralized.
+The `FeatureKey` contract keeps keys type-safe and centralized.
 
 ```php
 use Chemaclass\FeatureFlags\Contracts\FeatureKey;
@@ -20,48 +20,69 @@ enum AppFeature: string implements FeatureKey
 }
 ```
 
-You can also pass raw strings everywhere. The enum is optional sugar.
+Raw strings work everywhere too. The enum is optional sugar.
 
 ## Check a flag
+
+Two entry points: the **facade** (terser, recommended) or the **manager** resolved from the container.
+
+```php
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
+
+// Global check
+FeatureFlag::isEnabled(AppFeature::NewDashboard);
+
+// Scoped check. $scopeId is any string your app decides on
+// (team id, region code, cohort name, customer id, etc.)
+FeatureFlag::isEnabled(AppFeature::NewDashboard, $scopeId);
+
+// String key also works
+FeatureFlag::isEnabled('new-dashboard', $scopeId);
+```
+
+Or via the container:
 
 ```php
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 
-$manager = app(FeatureFlagManager::class);
-
-// Global check
-$manager->isEnabled(AppFeature::NewDashboard);
-
-// Scoped check. $scopeId is any string your app decides on
-// (team id, region code, cohort name, customer id, etc.)
-$manager->isEnabled(AppFeature::NewDashboard, $scopeId);
-
-// String key also works
-$manager->isEnabled('new-dashboard', $scopeId);
+app(FeatureFlagManager::class)->isEnabled('new-dashboard', $scopeId);
 ```
+
+The facade resolves to the same singleton, so custom repository bindings still flow through.
 
 ### Resolution rules
 
-1. If a row exists for `(key, scope_id = $scopeId)` → use its `value`.
-2. Otherwise if a row exists for `(key, scope_id = null)` (global) → use its `value`.
+1. Row exists for `(key, scope_id = $scopeId)` → use its `value`.
+2. Otherwise row exists for `(key, scope_id = null)` (global) → use its `value`.
 3. Otherwise → `false`.
-4. Time-window: if `enabled_from`/`enabled_until` set, row only counts inside that window.
+4. Time window: if `enabled_from` / `enabled_until` is set, the row only counts inside that window.
 
-The scoped row **always wins over global** when both exist.
+Scoped row **always wins over global** when both exist.
 
 ## List all flags for a scope
 
 ```php
-$flags = $manager->all($scopeId);
+$flags = FeatureFlag::all($scopeId);
 // ['new-dashboard' => true, 'beta-billing' => false, ...]
 ```
 
 Returns global flags merged with scope overrides (scope wins).
 
-## Create / update a flag
+## Create
 
 ```php
-$manager->updateOrCreate(
+FeatureFlag::create([
+    'key'      => 'new-dashboard',
+    'scope_id' => null,
+    'value'    => true,
+    'hint'     => 'Q2 redesign rollout',
+]);
+```
+
+## Update (full upsert by `(key, scope_id)`)
+
+```php
+FeatureFlag::updateOrCreate(
     ['key' => 'new-dashboard', 'scope_id' => null],
     [
         'value'         => true,
@@ -73,31 +94,41 @@ $manager->updateOrCreate(
 );
 ```
 
+## Update (partial by id)
+
+```php
+FeatureFlag::update($flagId, ['hint' => 'Renamed rollout']);
+FeatureFlag::update($flagId, ['enabled_until' => now()->addWeek()]);
+```
+
+Returns the updated `FeatureTransfer` DTO, or `null` if the id is missing.
+
+## Delete
+
+```php
+FeatureFlag::delete($flagId); // true on success, false if id is missing
+```
+
 ## Toggle
 
 ```php
-// Flip a single row by id
-$newValue = $manager->toggleValue($flagId);
-
-// Flip `is_dev` for every row sharing a key
-$newDevState = $manager->toggleDevByKey('new-dashboard');
+$newValue = FeatureFlag::toggleValue($flagId);          // flip one row's value
+$newDev   = FeatureFlag::toggleDevByKey('new-dashboard'); // flip is_dev on every row of that key
 ```
 
 ## Find
 
 ```php
-$transfer = $manager->findById($id);                       // ?FeatureTransfer
-$transfer = $manager->findByKeyAndScope('new-dashboard', $scopeId);
+$transfer = FeatureFlag::findById($id);                            // ?FeatureTransfer
+$transfer = FeatureFlag::findByKeyAndScope('new-dashboard', $scopeId);
 ```
 
 `FeatureTransfer` is a read-only DTO, safe to return from APIs.
 
 ## Time windows
 
-Set `enabled_from` and/or `enabled_until` to gate by date:
-
 ```php
-$manager->updateOrCreate(
+FeatureFlag::updateOrCreate(
     ['key' => 'black-friday-banner', 'scope_id' => null],
     [
         'value'         => true,
@@ -113,10 +144,11 @@ Outside the window, `isEnabled()` returns `false` even if `value = true`.
 
 `is_dev = true` is a hint your app can use to hide a flag from non-engineering users or block production exposure. The package doesn't enforce anything. Your code decides what `is_dev` means.
 
-Example: hide dev-only flags in the admin UI for non-admin users (customize the published Blade).
+The admin UI shows a `DEV` pill on rows where `is_dev = true`, and a per-key `DEV` button that flips the marker on every row sharing the key.
 
 ## Next steps
 
 - [Scope resolvers](scopes.md)
 - [Middleware guard](middleware.md)
+- [Admin UI](admin-ui.md)
 - [Recipes](recipes.md)
