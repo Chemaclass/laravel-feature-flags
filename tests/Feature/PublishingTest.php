@@ -28,6 +28,12 @@ it('publishes routes under feature-flags-routes tag', function (): void {
     expect($paths)->not->toBeEmpty();
 });
 
+it('publishes everything under feature-flags tag (all-in-one)', function (): void {
+    $paths = FeatureFlagsServiceProvider::pathsToPublish(FeatureFlagsServiceProvider::class, 'feature-flags');
+
+    expect($paths)->toHaveCount(4);
+});
+
 it('registers the feature.enabled middleware alias', function (): void {
     $router = app('router');
 

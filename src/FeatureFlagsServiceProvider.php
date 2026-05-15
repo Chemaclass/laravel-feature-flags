@@ -58,5 +58,12 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../routes/admin.php' => base_path('routes/feature-flags.php'),
         ], 'feature-flags-routes');
+
+        $this->publishes([
+            __DIR__.'/../config/feature-flags.php' => config_path('feature-flags.php'),
+            __DIR__.'/../database/migrations' => database_path('migrations'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/feature-flags'),
+            __DIR__.'/../routes/admin.php' => base_path('routes/feature-flags.php'),
+        ], 'feature-flags');
     }
 }
