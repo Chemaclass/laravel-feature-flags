@@ -14,18 +14,22 @@ composer require chemaclass/laravel-feature-flags
 
 The package auto-registers `FeatureFlagsServiceProvider` via `extra.laravel.providers` in `composer.json`. No manual provider wiring needed.
 
-## Publish config
+## Publish everything (recommended)
 
 ```bash
-php artisan vendor:publish --tag=feature-flags-config
+php artisan vendor:publish --tag=feature-flags
+php artisan migrate
 ```
 
-Produces `config/feature-flags.php`. See [configuration.md](configuration.md) for the full reference.
+This single tag publishes the config, the migration, the admin view, and the admin routes file in one shot.
 
-## Publish migrations
+## Or publish piece by piece
 
 ```bash
-php artisan vendor:publish --tag=feature-flags-migrations
+php artisan vendor:publish --tag=feature-flags-config       # config/feature-flags.php
+php artisan vendor:publish --tag=feature-flags-migrations   # DB migration
+php artisan vendor:publish --tag=feature-flags-views        # Blade admin view (optional)
+php artisan vendor:publish --tag=feature-flags-routes       # Admin routes (optional)
 php artisan migrate
 ```
 
@@ -47,36 +51,27 @@ Schema:
 
 Unique constraint: `(key, scope_id)`.
 
-## Optional: publish views
-
-```bash
-php artisan vendor:publish --tag=feature-flags-views
-```
-
-Customizes the admin Blade at `resources/views/vendor/feature-flags/admin/index.blade.php`.
-
-## Optional: publish routes
-
-```bash
-php artisan vendor:publish --tag=feature-flags-routes
-```
-
-Copies the admin routes to `routes/feature-flags.php` if you want to manage them yourself. Then disable the bundled admin route loader in config:
-
-```php
-'admin' => [
-    'enabled' => false,
-    // ...
-],
-```
-
 ## Verify
 
 ```bash
 php artisan route:list | grep feature-flags
 ```
 
-You should see `GET /admin/feature-flags` (default prefix) and the toggle/store/destroy routes.
+You should see the admin routes: `index`, `store`, `update`, `toggle`, `toggle-dev-row`, `toggle-dev`, `destroy`.
+
+## Disabling the bundled routes
+
+If you want to wire the admin routes yourself (custom layout, controller, or auth), publish the routes file (`--tag=feature-flags-routes`) and then in config:
+
+```php
+'admin' => ['enabled' => false],
+```
+
+Include the published file from your own `routes/web.php`:
+
+```php
+require base_path('routes/feature-flags.php');
+```
 
 ## Next steps
 
