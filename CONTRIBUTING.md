@@ -6,29 +6,50 @@ Thanks for your interest. This guide covers everything needed to hack on the pac
 
 Two ways to boot a real Laravel app backed only by this package.
 
-### Option A: Docker (recommended)
+### Option A: Docker via Makefile (recommended)
 
 Zero PHP setup on your machine. Requires Docker (24+).
 
 ```bash
-docker compose up
+make up           # build, start, wait for healthy, print URL
 ```
 
-Once the build finishes:
+Then open <http://localhost:8000/admin/feature-flags>. The demo auto-logs you in as the seeded `demo@example.com` user.
 
-- Demo app: <http://localhost:8000>
-- Auto-login then redirect to `/admin/feature-flags`
-
-Stop with `Ctrl+C`. The volume `composer-cache` survives between runs.
-
-Run tests or static analysis in container:
+All common dev tasks have shortcuts:
 
 ```bash
-docker compose run --rm test
-docker compose run --rm stan
+make help         # list every target
+make up           # boot and wait until healthy
+make down         # stop containers (keeps DB volume)
+make restart      # restart running container
+make logs         # tail logs
+make shell        # sh inside the container
+make tinker       # testbench tinker REPL
+make seed         # reseed the demo DB
+make reset        # wipe DB volume + boot fresh
+make rebuild      # rebuild image (after Dockerfile/composer.json changes)
+make test         # run pest (Unit + Feature)
+make test-unit
+make test-feature
+make stan         # phpstan
 ```
 
-### Option B: Native PHP
+Composer deps are baked into the image, so `make up` after `make down` is a few seconds, not a minute. The `workbench-db` named volume persists flag rows across restarts; use `make reset` to wipe.
+
+### Option B: Raw `docker compose`
+
+If you don't have `make`:
+
+```bash
+docker compose up -d --wait
+docker compose run --rm test
+docker compose run --rm stan
+docker compose exec app vendor/bin/testbench tinker
+docker compose down
+```
+
+### Option C: Native PHP
 
 Requires PHP 8.3+, Composer, sqlite.
 
