@@ -12,13 +12,13 @@ return [
     'model' => FeatureFlag::class,
 
     'scope' => [
-        'column'   => 'scope_id',
+        'column' => 'scope_id',
         'resolver' => NullScopeResolver::class,
     ],
 
     'admin' => [
-        'enabled'    => true,
-        'prefix'     => 'admin/feature-flags',
+        'enabled' => true,
+        'prefix' => 'admin/feature-flags',
         'middleware' => ['web', 'auth'],
         'route_name' => 'feature-flags.',
     ],

@@ -6,6 +6,7 @@ namespace Chemaclass\FeatureFlags\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
@@ -14,8 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property ?string $scope_id
  * @property ?string $hint
  * @property bool $is_dev
- * @property ?\Illuminate\Support\Carbon $enabled_from
- * @property ?\Illuminate\Support\Carbon $enabled_until
+ * @property ?Carbon $enabled_from
+ * @property ?Carbon $enabled_until
  */
 class FeatureFlag extends Model
 {
@@ -34,9 +35,9 @@ class FeatureFlag extends Model
 
     /** @var array<string, string> */
     protected $casts = [
-        'value'         => 'boolean',
-        'is_dev'        => 'boolean',
-        'enabled_from'  => 'datetime',
+        'value' => 'boolean',
+        'is_dev' => 'boolean',
+        'enabled_from' => 'datetime',
         'enabled_until' => 'datetime',
     ];
 

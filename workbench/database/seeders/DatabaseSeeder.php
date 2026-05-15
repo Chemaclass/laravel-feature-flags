@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
         User::query()->updateOrCreate(
             ['email' => 'demo@example.com'],
             [
-                'name'      => 'Demo Admin',
-                'password'  => Hash::make('password'),
+                'name' => 'Demo Admin',
+                'password' => Hash::make('password'),
                 'tenant_id' => 'tenant-A',
             ],
         );
@@ -42,9 +42,9 @@ class DatabaseSeeder extends Seeder
         $manager->updateOrCreate(
             ['key' => 'holiday-banner', 'scope_id' => null],
             [
-                'value'         => true,
-                'hint'          => 'Time-windowed banner',
-                'enabled_from'  => now()->subDay(),
+                'value' => true,
+                'hint' => 'Time-windowed banner',
+                'enabled_from' => now()->subDay(),
                 'enabled_until' => now()->addDays(14),
             ],
         );

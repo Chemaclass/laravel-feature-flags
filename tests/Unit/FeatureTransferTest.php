@@ -7,12 +7,12 @@ use Chemaclass\FeatureFlags\Models\FeatureFlag;
 
 it('builds from a FeatureFlag model', function (): void {
     $model = new FeatureFlag([
-        'key'           => 'demo',
-        'scope_id'      => 'group-X',
-        'value'         => true,
-        'hint'          => 'My hint',
-        'is_dev'        => true,
-        'enabled_from'  => '2026-01-01 00:00:00',
+        'key' => 'demo',
+        'scope_id' => 'group-X',
+        'value' => true,
+        'hint' => 'My hint',
+        'is_dev' => true,
+        'enabled_from' => '2026-01-01 00:00:00',
         'enabled_until' => '2026-12-31 23:59:59',
     ]);
     $model->id = '01HXXX';

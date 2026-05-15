@@ -30,29 +30,29 @@ final class FeatureFlagController extends Controller
 
         return view('feature-flags::admin.index', [
             'entriesByKey' => $entries->groupBy('key'),
-            'total'        => $entries->count(),
+            'total' => $entries->count(),
         ]);
     }
 
     public function store(Request $request): JsonResponse|RedirectResponse
     {
         $data = $request->validate([
-            'key'           => ['required', 'string'],
-            'scope_id'      => ['nullable', 'string'],
-            'value'         => ['required', 'boolean'],
-            'hint'          => ['nullable', 'string'],
-            'is_dev'        => ['nullable', 'boolean'],
-            'enabled_from'  => ['nullable', 'date'],
+            'key' => ['required', 'string'],
+            'scope_id' => ['nullable', 'string'],
+            'value' => ['required', 'boolean'],
+            'hint' => ['nullable', 'string'],
+            'is_dev' => ['nullable', 'boolean'],
+            'enabled_from' => ['nullable', 'date'],
             'enabled_until' => ['nullable', 'date'],
         ]);
 
         $feature = $this->manager->updateOrCreate(
             ['key' => $data['key'], 'scope_id' => $data['scope_id'] ?? null],
             [
-                'value'         => $data['value'],
-                'hint'          => $data['hint'] ?? null,
-                'is_dev'        => $data['is_dev'] ?? false,
-                'enabled_from'  => $data['enabled_from'] ?? null,
+                'value' => $data['value'],
+                'hint' => $data['hint'] ?? null,
+                'is_dev' => $data['is_dev'] ?? false,
+                'enabled_from' => $data['enabled_from'] ?? null,
                 'enabled_until' => $data['enabled_until'] ?? null,
             ],
         );
@@ -67,11 +67,11 @@ final class FeatureFlagController extends Controller
     public function update(Request $request, string $id): JsonResponse|RedirectResponse
     {
         $data = $request->validate([
-            'value'         => ['sometimes', 'boolean'],
-            'hint'          => ['sometimes', 'nullable', 'string'],
-            'is_dev'        => ['sometimes', 'boolean'],
-            'scope_id'      => ['sometimes', 'nullable', 'string'],
-            'enabled_from'  => ['sometimes', 'nullable', 'date'],
+            'value' => ['sometimes', 'boolean'],
+            'hint' => ['sometimes', 'nullable', 'string'],
+            'is_dev' => ['sometimes', 'boolean'],
+            'scope_id' => ['sometimes', 'nullable', 'string'],
+            'enabled_from' => ['sometimes', 'nullable', 'date'],
             'enabled_until' => ['sometimes', 'nullable', 'date'],
         ]);
 

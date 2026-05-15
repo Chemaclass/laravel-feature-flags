@@ -10,7 +10,6 @@ use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 use Chemaclass\FeatureFlags\Repository\EloquentFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
-use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 

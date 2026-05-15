@@ -12,32 +12,33 @@ use Illuminate\Support\Facades\Route;
 use Workbench\App\Models\User;
 
 it('NullScopeResolver always returns null', function (): void {
-    $resolver = new NullScopeResolver();
+    $resolver = new NullScopeResolver;
 
     expect($resolver->resolve(Request::create('/')))->toBeNull();
 });
 
 it('UserTenantScopeResolver reads $user->tenant_id', function (): void {
     $user = User::query()->create([
-        'name'      => 'Scoped',
-        'email'     => 'scoped@example.com',
-        'password'  => bcrypt('x'),
+        'name' => 'Scoped',
+        'email' => 'scoped@example.com',
+        'password' => bcrypt('x'),
         'tenant_id' => 'tenant-Z',
     ]);
 
     $request = Request::create('/');
     $request->setUserResolver(fn () => $user);
 
-    expect((new UserTenantScopeResolver())->resolve($request))->toBe('tenant-Z');
+    expect((new UserTenantScopeResolver)->resolve($request))->toBe('tenant-Z');
 });
 
 it('UserTenantScopeResolver returns null when user is anonymous', function (): void {
-    expect((new UserTenantScopeResolver())->resolve(Request::create('/')))->toBeNull();
+    expect((new UserTenantScopeResolver)->resolve(Request::create('/')))->toBeNull();
 });
 
 it('middleware uses the bound resolver to pick scope', function (): void {
     // Custom resolver: always returns "scope-X"
-    $this->app->instance(FeatureScopeResolver::class, new class implements FeatureScopeResolver {
+    $this->app->instance(FeatureScopeResolver::class, new class implements FeatureScopeResolver
+    {
         public function resolve(Request $request): ?string
         {
             return 'scope-X';
@@ -55,7 +56,8 @@ it('middleware uses the bound resolver to pick scope', function (): void {
 });
 
 it('middleware blocks when bound resolver picks a scope without an override', function (): void {
-    $this->app->instance(FeatureScopeResolver::class, new class implements FeatureScopeResolver {
+    $this->app->instance(FeatureScopeResolver::class, new class implements FeatureScopeResolver
+    {
         public function resolve(Request $request): ?string
         {
             return 'scope-Y';

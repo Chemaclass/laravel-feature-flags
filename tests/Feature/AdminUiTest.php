@@ -10,7 +10,7 @@ beforeEach(function (): void {
     config()->set('feature-flags.admin.middleware', ['web']);
 
     $this->user = User::query()->create([
-        'name'  => 'Admin',
+        'name' => 'Admin',
         'email' => 'admin@example.com',
         'password' => bcrypt('secret'),
     ]);
@@ -54,7 +54,7 @@ it('update sets enabled_from and enabled_until', function (): void {
 
     $this->actingAs($this->user)
         ->patchJson("/admin/feature-flags/{$row->id}", [
-            'enabled_from'  => '2026-01-01 00:00:00',
+            'enabled_from' => '2026-01-01 00:00:00',
             'enabled_until' => '2026-12-31 23:59:59',
         ])
         ->assertOk();
@@ -90,9 +90,9 @@ it('toggle-dev (row) flips is_dev for a single row by id', function (): void {
 it('store creates a new flag', function (): void {
     $response = $this->actingAs($this->user)
         ->postJson('/admin/feature-flags', [
-            'key'   => 'gamma',
+            'key' => 'gamma',
             'value' => true,
-            'hint'  => 'Created via admin',
+            'hint' => 'Created via admin',
         ]);
 
     $response->assertOk()
@@ -112,9 +112,9 @@ it('store updates an existing flag (key + scope_id is the unique pair)', functio
 
     $this->actingAs($this->user)
         ->postJson('/admin/feature-flags', [
-            'key'      => 'delta',
+            'key' => 'delta',
             'scope_id' => null,
-            'value'    => true,
+            'value' => true,
         ])->assertOk();
 
     expect(FeatureFlag::query()->where('key', 'delta')->count())->toBe(1)
@@ -182,4 +182,3 @@ it('store validates required fields', function (): void {
         ->assertStatus(422)
         ->assertJsonValidationErrors(['key', 'value']);
 });
-

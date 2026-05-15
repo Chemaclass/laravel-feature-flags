@@ -1,8 +1,10 @@
 <?php
 
 declare(strict_types=1);
+use Chemaclass\FeatureFlags\FeatureFlagsServiceProvider;
+use Workbench\App\Providers\WorkbenchServiceProvider;
 
 return [
-    Workbench\App\Providers\WorkbenchServiceProvider::class,
-    Chemaclass\FeatureFlags\FeatureFlagsServiceProvider::class,
+    WorkbenchServiceProvider::class,
+    FeatureFlagsServiceProvider::class,
 ];

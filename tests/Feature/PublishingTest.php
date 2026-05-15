@@ -35,11 +35,11 @@ it('registers the feature.enabled middleware alias', function (): void {
 });
 
 it('registers all admin routes by default', function (): void {
-    expect(\Route::has('feature-flags.index'))->toBeTrue()
-        ->and(\Route::has('feature-flags.store'))->toBeTrue()
-        ->and(\Route::has('feature-flags.update'))->toBeTrue()
-        ->and(\Route::has('feature-flags.toggle'))->toBeTrue()
-        ->and(\Route::has('feature-flags.toggle-dev'))->toBeTrue()
-        ->and(\Route::has('feature-flags.toggle-dev-row'))->toBeTrue()
-        ->and(\Route::has('feature-flags.destroy'))->toBeTrue();
+    expect(Route::has('feature-flags.index'))->toBeTrue()
+        ->and(Route::has('feature-flags.store'))->toBeTrue()
+        ->and(Route::has('feature-flags.update'))->toBeTrue()
+        ->and(Route::has('feature-flags.toggle'))->toBeTrue()
+        ->and(Route::has('feature-flags.toggle-dev'))->toBeTrue()
+        ->and(Route::has('feature-flags.toggle-dev-row'))->toBeTrue()
+        ->and(Route::has('feature-flags.destroy'))->toBeTrue();
 });

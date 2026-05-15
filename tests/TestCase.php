@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Chemaclass\FeatureFlags\Tests;
 
 use Chemaclass\FeatureFlags\FeatureFlagsServiceProvider;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Workbench\App\Models\User;
 
 abstract class TestCase extends Orchestra
 {
@@ -21,7 +23,7 @@ abstract class TestCase extends Orchestra
     }
 
     /**
-     * @param  \Illuminate\Foundation\Application  $app
+     * @param  Application  $app
      * @return array<int, class-string>
      */
     protected function getPackageProviders($app): array
@@ -30,17 +32,17 @@ abstract class TestCase extends Orchestra
     }
 
     /**
-     * @param  \Illuminate\Foundation\Application  $app
+     * @param  Application  $app
      */
     protected function defineEnvironment($app): void
     {
         $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
-        $app['config']->set('auth.providers.users.model', \Workbench\App\Models\User::class);
+        $app['config']->set('auth.providers.users.model', User::class);
     }
 }
