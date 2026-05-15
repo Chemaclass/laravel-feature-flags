@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest. This guide covers everything needed to hack on the package locally: running the demo app, the test suites, and the conventions for commits and pull requests.
+Thanks for your interest. This guide covers everything needed to hack on the package locally: running the demo app, working with it while it's up, the test suites, and the conventions for commits and pull requests.
 
 ## Quick start
 
@@ -63,7 +63,7 @@ Visit <http://localhost:8000>.
 
 ## The demo app
 
-The repo ships a [Testbench](https://packages.tools/testbench) workbench, a tiny throwaway Laravel app under `workbench/` that boots only this package.
+The repo ships a [Testbench](https://packages.tools/testbench) workbench: a tiny throwaway Laravel app under `workbench/` that boots only this package.
 
 On first boot the seeder (`workbench/database/seeders/DatabaseSeeder.php`) creates:
 
@@ -82,66 +82,208 @@ And these flags:
 | `beta-billing`  | `tenant-A` | ON | Scope override beats global |
 | `holiday-banner`| global | ON | Time-windowed (±14 days) |
 
-The workbench root route auto-logs you in as the demo user and redirects to the admin page.
+A workbench middleware (`AutoLoginDemo`) silently authenticates every request as the demo user, so you never see a login screen.
 
-### Customizing the demo
+## Working with the running demo
+
+Once `make up` is done, you have a real, fully booted Laravel app on `localhost:8000` backed by the package. Here are the things you'll actually do while developing.
+
+### 1. Daily workflow loop
+
+```bash
+make up                 # one-time: boot
+# edit src/, workbench/, config/, resources/views/. Changes reload on next request
+make logs               # in another terminal, watch requests + dd() output
+make test-unit          # quick sanity (~0.3s)
+make test-feature       # full HTTP path (~1.5s)
+```
+
+Source under `src/` and `workbench/` is bind-mounted into the container. Save the file, hit refresh, code reloads. No restart needed.
+
+Config (`config/feature-flags.php`) is merged at boot, so changes there need `make restart`. Migrations need `make reset` (wipes the DB volume) or a manual `make shell` followed by `vendor/bin/testbench migrate`.
+
+### 2. Use the admin UI
+
+The UI lives at <http://localhost:8000/admin/feature-flags>. From there you can:
+
+- Click **ON / OFF** to flip a flag value (calls `POST /admin/feature-flags/{id}/toggle`)
+- Click **Delete** to remove a row (calls `DELETE /admin/feature-flags/{id}`)
+- See every flag row grouped by key, with scope, dev marker, and time window
+
+It's the same view your users will see once `feature-flags-views` is published. Edit `resources/views/admin/index.blade.php` and refresh; changes are live.
+
+### 3. Inspect the admin endpoints from the outside
+
+GET works with plain curl:
+
+```bash
+curl -s http://localhost:8000/admin/feature-flags | head -40
+```
+
+The mutation endpoints (`POST`, `DELETE`) sit in Laravel's `web` middleware group, so they require a CSRF token. That's by design: they are meant to be driven by the Blade admin UI or by your own authenticated frontend, not by anonymous curl.
+
+For programmatic changes during local dev, use **tinker** (next section) which talks to the manager directly and bypasses HTTP entirely.
+
+### 4. Drive the package from Tinker
+
+```bash
+make tinker
+```
+
+Inside the REPL you have the full Laravel container:
+
+```php
+// Resolve the manager
+$m = app(\Chemaclass\FeatureFlags\Manager\FeatureFlagManager::class);
+
+// Read
+$m->isEnabled('new-dashboard');            // true
+$m->isEnabled('beta-billing');             // false (global)
+$m->isEnabled('beta-billing', 'tenant-A'); // true  (scope override)
+$m->all('tenant-A');                       // ['new-dashboard' => true, 'beta-billing' => true, ...]
+
+// Write
+$m->updateOrCreate(
+    ['key' => 'experiment-x', 'scope_id' => null],
+    ['value' => true, 'hint' => 'tinker session'],
+);
+
+// Toggle
+$row = \Chemaclass\FeatureFlags\Models\FeatureFlag::where('key','experiment-x')->first();
+$m->toggleValue($row->id);
+```
+
+Hit refresh on the admin page to see your changes.
+
+### 5. Test the middleware against a real route
+
+Add a probe to `workbench/routes/web.php`:
+
+```php
+use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
+
+Route::get('/probe', fn () => 'allowed')
+    ->middleware(EnsureFeatureIsActive::using('experiment-x'));
+```
+
+Then:
+
+```bash
+curl -i http://localhost:8000/probe   # 400 "Feature disabled" if off, 200 "allowed" if on
+```
+
+Flip `experiment-x` in the UI or via tinker and watch the response change.
+
+### 6. Inspect the SQLite DB directly
+
+```bash
+make shell
+sqlite3 workbench/laravel/database/database.sqlite \
+  "select id, key, scope_id, value, is_dev from feature_flags;"
+```
+
+Or one-shot from the host:
+
+```bash
+docker compose exec app sqlite3 workbench/laravel/database/database.sqlite \
+  "select * from feature_flags;"
+```
+
+### 7. Reseed without losing image cache
+
+`make seed` re-runs the seeder against the live container. Use it after manual DB tinkering when you want a known-good baseline.
+
+`make reset` is the heavier hammer: it drops the DB volume and reboots; all manual changes are gone.
+
+### 8. Edit the demo seed data
+
+Open `workbench/database/seeders/DatabaseSeeder.php`, add or change `updateOrCreate(...)` calls, then:
+
+```bash
+make seed         # if you want the new rows on top of existing data
+make reset        # if you want a clean slate
+```
+
+### 9. Watch `dd()` and `dump()` output
+
+`make logs` tails the dev server. Any `dd()` / `dump()` / `Log::info()` calls inside `src/` or `workbench/` show up there in real time.
+
+### 10. Run a single test
+
+Inside the container (`make shell`):
+
+```bash
+vendor/bin/pest tests/Feature/AdminUiTest.php
+vendor/bin/pest --filter='toggle flips a flag value by id'
+```
+
+From the host without entering the container:
+
+```bash
+docker compose exec app vendor/bin/pest tests/Feature/AdminUiTest.php
+```
+
+## Customizing the demo
 
 Everything under `workbench/` is package-dev only (excluded from the published package).
 
-- Migrations: `workbench/database/migrations/`
-- Seeders: `workbench/database/seeders/` (referenced in `testbench.yaml`)
-- Demo routes: `workbench/routes/web.php`
-- Demo user model: `workbench/app/Models/User.php`
-- Boot config: `testbench.yaml`
+| File | Role |
+|------|------|
+| `workbench/app/Models/User.php` | Demo user model (auth target) |
+| `workbench/app/Providers/WorkbenchServiceProvider.php` | Overrides admin middleware, registers `AutoLoginDemo` globally |
+| `workbench/app/Http/Middleware/AutoLoginDemo.php` | Logs the demo user in on every request |
+| `workbench/database/migrations/` | Demo-only migrations (e.g. `tenant_id` on users) |
+| `workbench/database/seeders/DatabaseSeeder.php` | Initial flag + user data |
+| `workbench/routes/web.php` | Demo routes (root redirect; add your probes here) |
+| `workbench/bootstrap/providers.php` | Provider load order |
+| `testbench.yaml` | Workbench boot config |
 
-Rebuild after structural changes:
-
-```bash
-composer build
-```
-
-### Resetting the demo DB
-
-The workbench uses an on-disk SQLite file inside `workbench/laravel/database/`. Wipe it:
+Rebuild the workbench skeleton after structural changes (new migration files, new providers, etc.):
 
 ```bash
-rm -rf workbench/laravel/database/*.sqlite
-composer build
+make shell
+vendor/bin/testbench workbench:build
+exit
 ```
 
-Or in Docker:
+Or simply `make reset` to do it from a clean slate.
 
-```bash
-docker compose down -v
-docker compose up
-```
+### Persisting vs. wiping demo data
 
-### Live editing
+- The `workbench-db` named volume keeps SQLite data across `make down`, `make restart`, `make up`.
+- `make reset` deletes the volume and reseeds.
+- The volume only exists in Docker mode. In native mode the file is `workbench/laravel/database/database.sqlite`.
 
-Source changes in `src/` and `workbench/` reflect on the next request. No rebuild needed; composer autoload is mounted from the host.
+### Live editing matrix
 
-Config and migration changes need a rebuild:
-
-```bash
-composer build
-```
+| You changed... | Action |
+|---|---|
+| `src/**/*.php` | Refresh browser. Done. |
+| `workbench/routes/*`, `workbench/app/**/*.php` | Refresh browser. Done. |
+| `resources/views/**/*.blade.php` | Refresh browser. Done. |
+| `config/feature-flags.php` | `make restart` |
+| `database/migrations/*`, `workbench/database/migrations/*` | `make reset` |
+| `testbench.yaml`, `workbench/bootstrap/providers.php` | `make restart` |
+| `composer.json`, `Dockerfile` | `make rebuild` |
 
 ## Running the tests
 
 Two suites: **Unit** (manager + repository internals) and **Feature** (HTTP, middleware, admin UI end-to-end). Migrations run via Testbench's in-memory SQLite.
 
 ```bash
-composer test           # all suites
-composer test:unit
-composer test:feature
-composer stan           # phpstan
+make test           # all suites
+make test-unit
+make test-feature
+make stan           # phpstan
 ```
 
-In Docker:
+Native equivalents:
 
 ```bash
-docker compose run --rm test
-docker compose run --rm stan
+composer test
+composer test:unit
+composer test:feature
+composer stan
 ```
 
 ### Writing new tests
@@ -164,7 +306,7 @@ docker compose run --rm stan
 ## Static analysis
 
 ```bash
-composer stan
+make stan
 ```
 
 PHPStan level 6 against `src/`. If you hit Eloquent magic-method errors, install [`larastan/larastan`](https://github.com/larastan/larastan) locally; it is not pinned as a dev dep but is recognized.
@@ -198,14 +340,18 @@ CI runs the full test suite and PHPStan. Both must pass before merge.
 
 | Symptom | Fix |
 |---------|-----|
-| `404` at `/` in workbench | Run `composer build` first |
-| `SQLSTATE[HY000] [14] unable to open database file` | `mkdir -p workbench/laravel/database && composer build` |
-| Port 8000 busy | Edit `docker-compose.yml`, change `"8000:8000"` to e.g. `"8080:8000"` |
-| Container can't write | Ensure your user owns the repo dir; `docker compose down -v && docker compose up --build` |
-| PHPStan memory crash | `vendor/bin/phpstan analyse --memory-limit=512M` |
+| `make up` hangs forever | `make logs` to inspect; if composer install is still running on first build it can take a minute |
+| `404` at `/admin/feature-flags` | Container not healthy yet. `docker compose ps` and look for `(healthy)` |
+| `Target class [DatabaseSeeder] does not exist` | The build seed step ran against the wrong namespace; rerun `make seed` which uses the explicit `--class` |
+| `Route [login] not defined` | `AutoLoginDemo` middleware is not registered. Confirm `Workbench\App\Providers\WorkbenchServiceProvider` is in `workbench/bootstrap/providers.php` |
+| Port 8000 busy | Edit `docker-compose.yml`, change `"8000:8000"` to e.g. `"8080:8000"`, then `make rebuild` |
+| Container can't write | Ensure your user owns the repo dir, then `make reset` |
+| PHPStan memory crash | Already configured to `--memory-limit=512M` in the `stan` compose service; raise if you still hit it |
+| Symfony deps require PHP 8.4 | Already pinned in the image. If you upgraded `composer.json`, `make rebuild` |
 
 ## Where to look next
 
 - [docs/architecture.md](docs/architecture.md): internals overview
 - [docs/testing.md](docs/testing.md): testing tips for consumers of the package
 - [docs/extending.md](docs/extending.md): swap the repository or model
+- [docs/recipes.md](docs/recipes.md): common patterns (gradual rollout, kill switch, Blade directive, etc.)
