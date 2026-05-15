@@ -10,14 +10,14 @@ Agnostic, DB-backed feature flags for Laravel. Global toggles, per-scope overrid
 
 ## Highlights
 
-- **Agnostic** — a scope is whatever you want it to be (team, org, region, cohort, user…) via a `FeatureScopeResolver` contract
-- **Per-scope overrides** — scoped flag beats global; null scope = global default
-- **Time windows** — `enabled_from` / `enabled_until` gating
-- **Dev marker** — `is_dev` flag for filtering in non-prod environments
-- **Type-safe keys** — enum-based `FeatureKey` contract
-- **Middleware guard** — `EnsureFeatureIsActive` middleware + alias
-- **Admin UI** — published Blade page at `/admin/feature-flags`
-- **Repository pattern** — swap `EloquentFeatureFlagRepository` for any backend
+- **Agnostic**: a scope is whatever you want it to be (team, org, region, cohort, user, etc.) via a `FeatureScopeResolver` contract
+- **Per-scope overrides**: scoped flag beats global; null scope = global default
+- **Time windows**: `enabled_from` / `enabled_until` gating
+- **Dev marker**: `is_dev` flag for filtering in non-prod environments
+- **Type-safe keys**: enum-based `FeatureKey` contract
+- **Middleware guard**: `EnsureFeatureIsActive` middleware + alias
+- **Admin UI**: published Blade page at `/admin/feature-flags`
+- **Repository pattern**: swap `EloquentFeatureFlagRepository` for any backend
 
 ## Install
 
@@ -46,7 +46,7 @@ if (app(FeatureFlagManager::class)->isEnabled(AppFeature::NewDashboard)) {
     // gated code
 }
 
-// Scoped check — $scopeId is whatever string your app uses
+// Scoped check. $scopeId is whatever string your app uses
 // (team id, organization id, region code, cohort name, etc.)
 if (app(FeatureFlagManager::class)->isEnabled(AppFeature::NewDashboard, $scopeId)) {
     // gated code
@@ -62,17 +62,6 @@ Route::get('/dashboard', DashboardController::class)
     ->middleware(EnsureFeatureIsActive::using(AppFeature::NewDashboard));
 ```
 
-## Run locally / demo app
-
-The repo ships a Testbench-based demo app + Docker setup so you can play with the admin UI without installing the package in a host project.
-
-```bash
-docker compose up
-# open http://localhost:8000
-```
-
-See [docs/local-dev.md](docs/local-dev.md) for details.
-
 ## Documentation
 
 | Topic | Link |
@@ -87,7 +76,6 @@ See [docs/local-dev.md](docs/local-dev.md) for details.
 | Testing | [docs/testing.md](docs/testing.md) |
 | Recipes & patterns | [docs/recipes.md](docs/recipes.md) |
 | Architecture overview | [docs/architecture.md](docs/architecture.md) |
-| Local dev & demo app | [docs/local-dev.md](docs/local-dev.md) |
 
 ## Publish tags
 
@@ -105,12 +93,7 @@ See [docs/local-dev.md](docs/local-dev.md) for details.
 
 ## Contributing
 
-Issues and PRs welcome. Run tests:
-
-```bash
-composer test
-composer stan
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local dev setup, demo app, tests, and commit conventions.
 
 ## License
 
