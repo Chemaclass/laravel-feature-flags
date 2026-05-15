@@ -1,4 +1,4 @@
-FROM php:8.3-cli-alpine
+FROM php:8.4-cli-alpine
 
 RUN apk add --no-cache \
     git \
@@ -28,4 +28,4 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "composer install --prefer-dist --no-progress && vendor/bin/testbench workbench:build && vendor/bin/testbench serve --host=0.0.0.0 --port=8000"]
+CMD ["sh", "-c", "composer install --prefer-dist --no-progress && vendor/bin/testbench workbench:build && vendor/bin/testbench db:seed --class='Workbench\\Database\\Seeders\\DatabaseSeeder' && vendor/bin/testbench serve --host=0.0.0.0 --port=8000"]

@@ -12,7 +12,7 @@ workbench:
   user: 'demo@example.com'
   guard: 'web'
   install: true
-  welcome: true
+  welcome: false
   discovers:
     web: true
     api: false
@@ -23,6 +23,7 @@ workbench:
     - asset-publish
     - create-sqlite-db
     - db-wipe
+    - migrate-fresh
   assets:
     - feature-flags-config
     - feature-flags-views
