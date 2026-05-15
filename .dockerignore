@@ -1,0 +1,8 @@
+.git
+.idea
+vendor
+node_modules
+.phpunit.cache
+workbench/laravel
+*.sqlite
+*.log

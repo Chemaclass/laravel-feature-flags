@@ -1,0 +1,43 @@
+services:
+  app:
+    build:
+      context: .
+    image: chemaclass/laravel-feature-flags-dev:latest
+    container_name: laravel-feature-flags-demo
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - composer-cache:/root/.composer/cache
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: sqlite
+    working_dir: /app
+
+  test:
+    build:
+      context: .
+    image: chemaclass/laravel-feature-flags-dev:latest
+    container_name: laravel-feature-flags-test
+    profiles: ["tools"]
+    volumes:
+      - .:/app
+      - composer-cache:/root/.composer/cache
+    working_dir: /app
+    command: ["sh", "-c", "composer install --prefer-dist --no-progress && vendor/bin/pest"]
+
+  stan:
+    build:
+      context: .
+    image: chemaclass/laravel-feature-flags-dev:latest
+    container_name: laravel-feature-flags-stan
+    profiles: ["tools"]
+    volumes:
+      - .:/app
+      - composer-cache:/root/.composer/cache
+    working_dir: /app
+    command: ["sh", "-c", "composer install --prefer-dist --no-progress && vendor/bin/phpstan analyse"]
+
+volumes:
+  composer-cache:
