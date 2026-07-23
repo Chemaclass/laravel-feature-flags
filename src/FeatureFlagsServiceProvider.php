@@ -15,7 +15,9 @@ use Chemaclass\FeatureFlags\Console\ToggleFlagCommand;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\Contracts\FeatureKey;
 use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
+use Chemaclass\FeatureFlags\Events\FlagToggled;
 use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
+use Chemaclass\FeatureFlags\Listeners\RecordFlagChange;
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 use Chemaclass\FeatureFlags\Pennant\FeatureFlagsPennantDriver;
 use Chemaclass\FeatureFlags\Repository\CachingFeatureFlagRepository;
@@ -24,6 +26,7 @@ use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
 
@@ -82,6 +85,10 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
         }
 
         $this->registerPennantDriver();
+
+        if ((bool) config('feature-flags.audit.enabled', false)) {
+            Event::listen(FlagToggled::class, RecordFlagChange::class);
+        }
 
         $this->publishes([
             __DIR__.'/../config/feature-flags.php' => config_path('feature-flags.php'),

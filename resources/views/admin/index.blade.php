@@ -266,6 +266,22 @@
                         </button>
                     </form>
                 </article>
+
+                @if (isset($auditsByKey) && $auditsByKey->has($key))
+                    <details class="mt-3 text-xs">
+                        <summary class="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">History ({{ $auditsByKey[$key]->count() }})</summary>
+                        <ul class="mt-2 space-y-1 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+                            @foreach ($auditsByKey[$key] as $audit)
+                                <li>
+                                    {{ optional($audit->created_at)->format('Y-m-d H:i') }} ·
+                                    {{ $audit->old_value ? 'on' : 'off' }} → {{ $audit->new_value ? 'on' : 'off' }}
+                                    @if ($audit->scope_id) · scope {{ $audit->scope_id }} @endif
+                                    @if ($audit->actor) · by {{ $audit->actor }} @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </details>
+                @endif
             </div>
         </details>
     @empty

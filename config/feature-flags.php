@@ -60,6 +60,17 @@ return [
         'prefix' => 'feature-flags',
     ],
 
+    /*
+     * Audit log. When enabled, a listener records every flag toggle to the
+     * audits table. `actor` is an optional class with resolve(): ?string; the
+     * default is the authenticated user id.
+     */
+    'audit' => [
+        'enabled' => env('FEATURE_FLAGS_AUDIT_ENABLED', false),
+        'table' => 'feature_flag_audits',
+        'actor' => null,
+    ],
+
     'events' => [
         /*
          * Dispatch a FlagEvaluated event on every flag check. Off by default to
