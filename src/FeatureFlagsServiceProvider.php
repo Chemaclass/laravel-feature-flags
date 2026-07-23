@@ -10,6 +10,7 @@ use Chemaclass\FeatureFlags\Console\DeleteFlagCommand;
 use Chemaclass\FeatureFlags\Console\GenerateEnumCommand;
 use Chemaclass\FeatureFlags\Console\ListFlagsCommand;
 use Chemaclass\FeatureFlags\Console\StaleFlagsCommand;
+use Chemaclass\FeatureFlags\Console\SyncFlagsCommand;
 use Chemaclass\FeatureFlags\Console\ToggleFlagCommand;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\Contracts\FeatureKey;
@@ -76,6 +77,7 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
                 DeleteFlagCommand::class,
                 StaleFlagsCommand::class,
                 GenerateEnumCommand::class,
+                SyncFlagsCommand::class,
             ]);
         }
 

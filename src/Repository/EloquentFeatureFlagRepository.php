@@ -271,6 +271,15 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
         return $keys;
     }
 
+    public function allFlags(): array
+    {
+        return $this->query()
+            ->orderBy('key')
+            ->get()
+            ->map(fn (FeatureFlag $m): FeatureTransfer => FeatureTransfer::fromModel($m))
+            ->all();
+    }
+
     public function findById(string $id): ?FeatureTransfer
     {
         $m = $this->modelClass::find($id);

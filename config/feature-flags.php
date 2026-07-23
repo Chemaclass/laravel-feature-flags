@@ -26,6 +26,14 @@ return [
     'middleware_alias' => 'feature.enabled',
 
     /*
+     * Config-as-code. `flag:sync` reconciles the definitions file below into the
+     * database (upsert; --prune removes flags not in the file).
+     */
+    'sync' => [
+        'path' => base_path('feature-flags.php'),
+    ],
+
+    /*
      * Global kill switch. Any key listed here is forced off before any query,
      * regardless of its stored value — a master off-switch for incidents.
      */
