@@ -43,27 +43,27 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
         $this->prefix = $config['prefix'] ?? 'feature-flags';
     }
 
-    public function isEnabled(string $key, ?string $scopeId = null): bool
+    public function isEnabled(string $key, ?string $scopeId = null, array $context = []): bool
     {
-        $memoKey = $this->memoKey($key, $scopeId);
+        $memoKey = $this->memoKey($key, $scopeId, $context);
         if (array_key_exists($memoKey, $this->enabledMemo)) {
             return $this->enabledMemo[$memoKey];
         }
 
         $value = $this->remember(
             'enabled:'.$memoKey,
-            fn (): bool => $this->inner->isEnabled($key, $scopeId),
+            fn (): bool => $this->inner->isEnabled($key, $scopeId, $context),
         );
 
         return $this->enabledMemo[$memoKey] = $value;
     }
 
-    public function allEnabled(array $keys, ?string $scopeId = null): array
+    public function allEnabled(array $keys, ?string $scopeId = null, array $context = []): array
     {
         $result = [];
         $missing = [];
         foreach ($keys as $key) {
-            $memoKey = $this->memoKey($key, $scopeId);
+            $memoKey = $this->memoKey($key, $scopeId, $context);
             if (array_key_exists($memoKey, $this->enabledMemo)) {
                 $result[$key] = $this->enabledMemo[$memoKey];
             } else {
@@ -72,8 +72,8 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
         }
 
         if ($missing !== []) {
-            foreach ($this->inner->allEnabled($missing, $scopeId) as $key => $value) {
-                $this->enabledMemo[$this->memoKey($key, $scopeId)] = $value;
+            foreach ($this->inner->allEnabled($missing, $scopeId, $context) as $key => $value) {
+                $this->enabledMemo[$this->memoKey($key, $scopeId, $context)] = $value;
                 $result[$key] = $value;
             }
         }
@@ -136,9 +136,14 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
         return $this->tapFlush(fn (): bool => $this->inner->toggleDevByKey($key));
     }
 
-    private function memoKey(string $key, ?string $scopeId): string
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    private function memoKey(string $key, ?string $scopeId, array $context = []): string
     {
-        return $key.'|'.($scopeId ?? '');
+        $suffix = $context === [] ? '' : '|'.md5(serialize($context));
+
+        return $key.'|'.($scopeId ?? '').$suffix;
     }
 
     /**

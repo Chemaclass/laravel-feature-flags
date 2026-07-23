@@ -41,6 +41,7 @@ final class FeatureFlagController extends Controller
             'scope_id' => ['nullable', 'string'],
             'value' => ['required', 'boolean'],
             'rollout_percentage' => ['nullable', 'integer', 'between:0,100'],
+            'rules' => ['nullable', 'array'],
             'hint' => ['nullable', 'string'],
             'is_dev' => ['nullable', 'boolean'],
             'enabled_from' => ['nullable', 'date'],
@@ -52,6 +53,7 @@ final class FeatureFlagController extends Controller
             [
                 'value' => $data['value'],
                 'rollout_percentage' => $data['rollout_percentage'] ?? null,
+                'rules' => $data['rules'] ?? null,
                 'hint' => $data['hint'] ?? null,
                 'is_dev' => $data['is_dev'] ?? false,
                 'enabled_from' => $data['enabled_from'] ?? null,
@@ -71,6 +73,7 @@ final class FeatureFlagController extends Controller
         $data = $request->validate([
             'value' => ['sometimes', 'boolean'],
             'rollout_percentage' => ['sometimes', 'nullable', 'integer', 'between:0,100'],
+            'rules' => ['sometimes', 'nullable', 'array'],
             'hint' => ['sometimes', 'nullable', 'string'],
             'is_dev' => ['sometimes', 'boolean'],
             'scope_id' => ['sometimes', 'nullable', 'string'],

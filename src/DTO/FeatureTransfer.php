@@ -9,6 +9,9 @@ use DateTimeInterface;
 
 final readonly class FeatureTransfer
 {
+    /**
+     * @param  array<int, array<string, mixed>>|null  $rules
+     */
     public function __construct(
         public string $id,
         public string $key,
@@ -19,6 +22,7 @@ final readonly class FeatureTransfer
         public ?DateTimeInterface $enabledFrom,
         public ?DateTimeInterface $enabledUntil,
         public ?int $rolloutPercentage = null,
+        public ?array $rules = null,
     ) {}
 
     public static function fromModel(FeatureFlag $model): self
@@ -33,6 +37,7 @@ final readonly class FeatureTransfer
             enabledFrom: $model->enabled_from,
             enabledUntil: $model->enabled_until,
             rolloutPercentage: $model->rollout_percentage,
+            rules: $model->rules,
         );
     }
 }

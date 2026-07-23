@@ -177,6 +177,32 @@ FeatureFlag::updateOrCreate(
 
 Outside the window, `isEnabled()` returns `false` even if `value = true`.
 
+## Targeting rules
+
+Gate a flag on attributes of an evaluation context. Rules are stored per flag; a matching
+rule overrides the boolean value, so you can target by plan, country, email, cohort, anything:
+
+```php
+FeatureFlag::updateOrCreate(
+    ['key' => 'new-billing', 'scope_id' => null],
+    [
+        'value' => false, // default off
+        'rules' => [
+            ['when' => [['attr' => 'plan', 'op' => 'eq', 'value' => 'pro']], 'then' => true],
+            ['when' => [['attr' => 'country', 'op' => 'in', 'value' => ['DE', 'AT']]], 'then' => false],
+        ],
+    ],
+);
+
+FeatureFlag::isEnabled('new-billing', $userId, ['plan' => 'pro', 'country' => 'US']); // true
+```
+
+- Conditions inside a `when` **AND** together; rules **OR** (first match wins).
+- Operators: `eq`, `neq`, `in`, `not_in`, `gt`, `gte`, `lt`, `lte`, `contains`, `starts_with`, `ends_with`.
+- A missing context attribute makes its condition false — never throws.
+- No matching rule → falls back to the boolean `value` + rollout.
+- The context is part of the cache key, so different contexts never collide.
+
 ## Percentage rollout
 
 Set `rollout_percentage` (0–100) to enable a flag for a deterministic slice of scopes.
