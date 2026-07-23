@@ -126,6 +126,10 @@
                 <input type="datetime-local" name="enabled_until"
                        class="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm">
             </label>
+            <label class="text-xs font-medium text-zinc-600 dark:text-zinc-400 col-span-2">Rollout % <span class="text-zinc-400 font-normal">(empty = full, pair with a scope)</span>
+                <input type="number" name="rollout_percentage" min="0" max="100" placeholder="—"
+                       class="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-mono">
+            </label>
             <div class="col-span-2 flex items-center justify-between pt-2">
                 <div class="flex items-center gap-4 text-xs text-zinc-600 dark:text-zinc-400">
                     <label class="inline-flex items-center gap-2"><input type="checkbox" name="value" value="1" checked class="rounded"> Enabled</label>

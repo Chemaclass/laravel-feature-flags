@@ -18,6 +18,7 @@ final readonly class FeatureTransfer
         public bool $isDev,
         public ?DateTimeInterface $enabledFrom,
         public ?DateTimeInterface $enabledUntil,
+        public ?int $rolloutPercentage = null,
     ) {}
 
     public static function fromModel(FeatureFlag $model): self
@@ -31,6 +32,7 @@ final readonly class FeatureTransfer
             isDev: (bool) $model->is_dev,
             enabledFrom: $model->enabled_from,
             enabledUntil: $model->enabled_until,
+            rolloutPercentage: $model->rollout_percentage,
         );
     }
 }
