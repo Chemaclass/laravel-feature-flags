@@ -7,6 +7,7 @@ namespace Chemaclass\FeatureFlags\Repository;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
 use Chemaclass\FeatureFlags\DTO\VariantResult;
+use Chemaclass\FeatureFlags\Events\FlagsChanged;
 use Closure;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -193,6 +194,12 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
             // Bump the namespace version instead of enumerating keys, so a single
             // write invalidates every cached evaluation on any cache driver.
             $store->forever($this->prefix.':version', $this->version($store) + 1);
+        }
+
+        // Tell other nodes to invalidate too (opt-in). event() resolves the live
+        // dispatcher so a faked dispatcher in tests still sees it.
+        if ((bool) config('feature-flags.realtime.enabled', false)) {
+            event(new FlagsChanged);
         }
     }
 

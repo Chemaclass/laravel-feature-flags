@@ -76,6 +76,23 @@ evaluations **across requests**. Writes bump a namespace version, so a single fl
 invalidates every cached evaluation instantly — no per-key enumeration, works on any driver.
 Leave `store` as `null` to keep memoization-only behavior (no cross-request cache).
 
+### `realtime`
+Real-time cache invalidation across nodes. When enabled, every flag write broadcasts a
+`FlagsChanged` event and a listener bumps each node's cache namespace version, so a change
+propagates instantly instead of waiting for the `cache.ttl`.
+
+```php
+'realtime' => [
+    'enabled' => env('FEATURE_FLAGS_REALTIME_ENABLED', false),
+    'connection' => env('FEATURE_FLAGS_REALTIME_CONNECTION'),
+    'channel' => 'feature-flags',
+],
+```
+
+Only relevant with a `cache.store` configured and a broadcaster set up. Off by default —
+no broadcasting. Invalidation is idempotent (version bumps only go up), so echoed broadcasts
+are harmless.
+
 ## Env-driven config
 
 Wire to `.env` if you want per-environment toggles:
