@@ -7,20 +7,17 @@
 [![Laravel](https://img.shields.io/badge/Laravel-11.x%20%7C%2012.x-FF2D20?logo=laravel&logoColor=white)](composer.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Agnostic, DB-backed feature flags for Laravel. Global toggles, per-scope overrides, time windows, dev markers, middleware guard, and a zero-build Blade admin page with dark mode.
+A full feature-flag toolkit for Laravel that needs **nothing but your database**. Simple
+on/off toggles when that's all you want — attribute targeting, percentage rollouts, A/B
+variants, per-environment values, and a Blade admin UI when you need more.
 
-> Drop it in any Laravel app. No vendor lock-in, no opinionated stack, no assumptions about your domain.
+> Drop it in any Laravel app. No external service, no vendor lock-in, no infra to run.
 
-## Highlights
-
-- **Agnostic**: a scope is whatever you want (team, org, region, cohort, user) via a `FeatureScopeResolver` contract
-- **Per-scope overrides**: scoped row beats global; null scope = global default
-- **Time windows**: `enabled_from` / `enabled_until` gating
-- **Dev marker**: `is_dev` flag for filtering in non-prod environments
-- **Type-safe keys**: enum-based `FeatureKey` contract
-- **Facade + middleware**: `FeatureFlag::isEnabled(...)` and the `feature.enabled` route guard
-- **Admin UI**: published Blade page with toggle switches, inline edits, dark mode, scope grouping
-- **Repository pattern**: swap `EloquentFeatureFlagRepository` for any backend
+```php
+if (FeatureFlag::isEnabled('new-dashboard')) {
+    // ship it
+}
+```
 
 ## Install
 
@@ -30,13 +27,55 @@ php artisan vendor:publish --tag=feature-flags
 php artisan migrate
 ```
 
-The single `feature-flags` tag publishes the config, the migration, the admin view, and the admin routes file. See [docs/installation.md](docs/installation.md) for per-tag installs.
+Auto-registers itself. Publishes the config, migration, admin view, and admin routes.
+See [installation](docs/installation.md) for piece-by-piece publishing.
 
-## 30-second usage
+## Quickstart
+
+**1. Create a flag** — from the admin UI at `/admin/feature-flags`, the CLI, or code:
+
+```bash
+php artisan flag:create new-dashboard --value=1
+```
+
+**2. Check it** anywhere:
+
+```php
+use Chemaclass\FeatureFlags\Facades\FeatureFlag;
+
+if (FeatureFlag::isEnabled('new-dashboard')) {
+    // gated code
+}
+```
+
+**3. In Blade:**
+
+```blade
+@feature('new-dashboard')
+    <x-new-dashboard />
+@else
+    <x-legacy-dashboard />
+@endfeature
+```
+
+**4. Guard a route:**
+
+```php
+Route::get('/dashboard', DashboardController::class)
+    ->middleware('feature.enabled:new-dashboard');
+```
+
+That's the whole loop. Everything below is optional power you can adopt when you need it.
+
+## Cookbook
+
+Each recipe is copy-paste; follow the link for the full reference.
+
+<details>
+<summary><b>Type-safe keys with an enum</b> (optional, recommended)</summary>
 
 ```php
 use Chemaclass\FeatureFlags\Contracts\FeatureKey;
-use Chemaclass\FeatureFlags\Facades\FeatureFlag;
 
 enum AppFeature: string implements FeatureKey
 {
@@ -45,83 +84,131 @@ enum AppFeature: string implements FeatureKey
     public function key(): string { return $this->value; }
 }
 
-// Global check
-if (FeatureFlag::isEnabled(AppFeature::NewDashboard)) {
-    // gated code
-}
-
-// Scoped check. $scopeId is whatever string your app decides on
-// (team id, organization id, region code, cohort name, etc.)
-if (FeatureFlag::isEnabled(AppFeature::NewDashboard, $scopeId)) {
-    // gated code
-}
+FeatureFlag::isEnabled(AppFeature::NewDashboard);
 ```
 
-Full API on the facade: `isEnabled`, `all`, `create`, `update`, `updateOrCreate`, `delete`, `toggleValue`, `toggleDevByKey`, `findById`, `findByKeyAndScope`. See [docs/usage.md](docs/usage.md).
+Generate this enum from your existing flags: `php artisan flag:generate`. → [usage](docs/usage.md)
+</details>
 
-Route guard:
+<details>
+<summary><b>Per-scope overrides</b> (team, org, region, cohort, user…)</summary>
 
 ```php
-use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
-
-Route::get('/dashboard', DashboardController::class)
-    ->middleware(EnsureFeatureIsActive::using(AppFeature::NewDashboard));
-
-// or via alias
-Route::get('/dashboard', DashboardController::class)
-    ->middleware('feature.enabled:new-dashboard');
+// $scopeId is any string your app decides on. A scoped row beats the global one.
+FeatureFlag::isEnabled('new-dashboard', $team->id);
 ```
+
+A `FeatureScopeResolver` can resolve the scope automatically for the middleware and Blade.
+→ [scopes](docs/scopes.md)
+</details>
+
+<details>
+<summary><b>Target by attributes</b> (plan, country, email…)</summary>
+
+```php
+FeatureFlag::updateOrCreate(['key' => 'new-billing', 'scope_id' => null], [
+    'value' => false,
+    'rules' => [
+        ['when' => [['attr' => 'plan', 'op' => 'eq', 'value' => 'pro']], 'then' => true],
+    ],
+]);
+
+FeatureFlag::isEnabled('new-billing', $userId, ['plan' => 'pro']); // true
+```
+
+Operators: `eq, neq, in, not_in, gt, gte, lt, lte, contains, starts_with, ends_with`.
+→ [usage](docs/usage.md)
+</details>
+
+<details>
+<summary><b>Percentage rollout</b> (deterministic)</summary>
+
+```php
+FeatureFlag::updateOrCreate(['key' => 'new-checkout', 'scope_id' => null],
+    ['value' => true, 'rollout_percentage' => 30]);
+// enabled for a stable ~30% of scopes
+```
+→ [usage](docs/usage.md)
+</details>
+
+<details>
+<summary><b>A/B variants + payloads</b></summary>
+
+```php
+$v = FeatureFlag::variant('homepage', $userId);
+$v?->name;    // 'control' | 'blue'
+$v?->payload; // per-variant blob
+```
+→ [usage](docs/usage.md)
+</details>
+
+<details>
+<summary><b>Check many flags at once</b> (one query)</summary>
+
+```php
+FeatureFlag::allEnabled(['new-dashboard', 'beta-search'], $userId);
+// ['new-dashboard' => true, 'beta-search' => false]
+```
+</details>
+
+<details>
+<summary><b>Environments, prerequisites, kill-switch, audit, real-time, caching</b></summary>
+
+- **Environments** — same key, different value per env. → [usage](docs/usage.md)
+- **Prerequisites** — a flag requires others to be on. → [usage](docs/usage.md)
+- **Kill-switch** — force keys off via `FEATURE_FLAGS_KILL_SWITCH`. → [usage](docs/usage.md)
+- **Audit log** — persist every toggle + admin history. → [extending](docs/extending.md)
+- **Caching** — request memoization always on; set a cache store for cross-request + real-time invalidation. → [configuration](docs/configuration.md)
+</details>
+
+<details>
+<summary><b>Artisan & GitOps</b></summary>
+
+```bash
+php artisan flag:list --scope=team-1
+php artisan flag:create beta-search --value=0 --hint="WIP"
+php artisan flag:toggle new-dashboard
+php artisan flag:stale --days=30         # flags safe to delete
+php artisan flag:generate                # typed enum from your keys
+php artisan flag:sync --prune            # reconcile from a versioned file (config-as-code)
+```
+→ [usage](docs/usage.md)
+</details>
 
 ## Admin UI
 
-Visit `/admin/feature-flags` (configurable, gated by `web`+`auth` by default). Features:
-
-- Flags grouped by key, global row tinted, scope overrides nested
-- Real sliding toggle switches, inline hint and time-window editing
-- Per-row and per-key dev marker toggles
-- Add scope override / new flag forms
-- Dark mode toggle, default follows OS
-- Color-hashed scope badges
-
-See [docs/admin-ui.md](docs/admin-ui.md).
+Visit `/admin/feature-flags` (configurable, gated by `web`+`auth` by default): flags grouped
+by key, sliding toggles, inline editing, scope overrides, dark mode. → [admin-ui](docs/admin-ui.md)
 
 ## Documentation
 
 | Topic | Link |
 |-------|------|
-| Installation & setup | [docs/installation.md](docs/installation.md) |
-| Configuration reference | [docs/configuration.md](docs/configuration.md) |
-| Defining & checking flags | [docs/usage.md](docs/usage.md) |
-| Scope resolvers | [docs/scopes.md](docs/scopes.md) |
-| Middleware guard | [docs/middleware.md](docs/middleware.md) |
-| Admin UI | [docs/admin-ui.md](docs/admin-ui.md) |
-| Custom repository / storage | [docs/extending.md](docs/extending.md) |
-| Testing | [docs/testing.md](docs/testing.md) |
-| Recipes & patterns | [docs/recipes.md](docs/recipes.md) |
-| Architecture overview | [docs/architecture.md](docs/architecture.md) |
-
-## Publish tags
-
-| Tag | What it publishes |
-|-----|-------------------|
-| `feature-flags` | All of the below in one shot |
-| `feature-flags-config` | `config/feature-flags.php` |
-| `feature-flags-migrations` | DB migration |
-| `feature-flags-views` | Blade admin view |
-| `feature-flags-routes` | Admin routes file |
+| Installation & setup | [installation.md](docs/installation.md) |
+| Configuration reference | [configuration.md](docs/configuration.md) |
+| Defining, checking, targeting & variants | [usage.md](docs/usage.md) |
+| Scope resolvers | [scopes.md](docs/scopes.md) |
+| Middleware guard | [middleware.md](docs/middleware.md) |
+| Admin UI | [admin-ui.md](docs/admin-ui.md) |
+| Custom repository, audit log, storage | [extending.md](docs/extending.md) |
+| Laravel Pennant bridge | [pennant.md](docs/pennant.md) |
+| Testing | [testing.md](docs/testing.md) |
+| Recipes & patterns | [recipes.md](docs/recipes.md) |
+| Architecture overview | [architecture.md](docs/architecture.md) |
 
 ## Requirements
 
 - PHP `^8.3`
 - Laravel `^11.0 || ^12.0`
 
-This package pulls in `illuminate/*` at those constraints and nothing more. Any security
-advisories reported by `composer audit` come transitively from the Laravel framework your
-app already ships — keep your Laravel install on its latest patch release to pick up fixes.
+This package pulls in `illuminate/*` and nothing more. Any advisories from `composer audit`
+come transitively from the Laravel framework your app already ships — keep Laravel on its
+latest patch release to pick up fixes.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for local dev setup, the Docker demo app, the test suites, formatting, and the `release.sh` flow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local dev setup, the Docker demo app, the test
+suites, formatting, and the `release.sh` flow.
 
 ## License
 

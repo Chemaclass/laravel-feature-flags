@@ -42,14 +42,24 @@ Schema:
 | `id` | ULID | Primary key |
 | `key` | string | Flag key, indexed |
 | `scope_id` | string nullable | Free-form scope id (any string); `null` = global |
+| `environment` | string nullable | Scope to one env; `null` = all envs |
 | `value` | bool | On/off |
+| `rollout_percentage` | tinyint nullable | Deterministic % rollout (0–100) |
+| `rules` | json nullable | Attribute targeting rules |
+| `prerequisites` | json nullable | Keys that must all be enabled |
+| `variants` | json nullable | Weighted A/B/n variants |
+| `variant_payloads` | json nullable | Per-variant payloads |
 | `hint` | string nullable | Free-text label |
 | `is_dev` | bool | Dev marker |
 | `enabled_from` | timestamp nullable | Window start |
 | `enabled_until` | timestamp nullable | Window end |
 | `created_at`/`updated_at` | timestamps | - |
 
-Unique constraint: `(key, scope_id)`.
+Unique constraint: `(key, scope_id, environment)`.
+
+The base table ships the core columns; the richer columns are added by additive migrations
+bundled with the package, so `php artisan migrate` brings everything up to date. An optional
+`feature_flag_audits` table is created for the [audit log](extending.md).
 
 ## Verify
 
