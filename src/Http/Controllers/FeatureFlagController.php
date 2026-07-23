@@ -6,6 +6,7 @@ namespace Chemaclass\FeatureFlags\Http\Controllers;
 
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
+use Chemaclass\FeatureFlags\Models\FeatureFlagAudit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,9 +29,20 @@ final class FeatureFlagController extends Controller
             ->orderBy('scope_id')
             ->get();
 
+        $auditsByKey = collect();
+        if ((bool) config('feature-flags.audit.enabled', false)) {
+            $auditsByKey = FeatureFlagAudit::query()
+                ->orderByDesc('created_at')
+                ->limit(200)
+                ->get()
+                ->groupBy('key')
+                ->map(fn ($group) => $group->take(20));
+        }
+
         return view('feature-flags::admin.index', [
             'entriesByKey' => $entries->groupBy('key'),
             'total' => $entries->count(),
+            'auditsByKey' => $auditsByKey,
         ]);
     }
 

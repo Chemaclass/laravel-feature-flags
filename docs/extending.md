@@ -152,6 +152,26 @@ Event::listen(function (FlagToggled $e): void {
 });
 ```
 
+## Audit log
+
+Enable an opt-in audit trail that persists every flag toggle and shows a per-flag history in
+the admin UI:
+
+```php
+// config/feature-flags.php
+'audit' => [
+    'enabled' => true,
+    'table' => 'feature_flag_audits',
+    'actor' => null, // or a class implementing AuditActorResolver
+],
+```
+
+When enabled, a listener writes a `feature_flag_audits` row (`key`, `scope_id`, `action`,
+`old_value`, `new_value`, `actor`, `created_at`) on each `FlagToggled`. The actor defaults to
+the authenticated user id; provide a class implementing
+`Chemaclass\FeatureFlags\Contracts\AuditActorResolver` to customize it. Disabled by default —
+no listener, no writes.
+
 ## Adding columns
 
 1. Add a migration alongside the published one.
