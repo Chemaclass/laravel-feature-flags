@@ -8,8 +8,10 @@ use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
 use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
+use Chemaclass\FeatureFlags\Repository\CachingFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Repository\EloquentFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,7 +21,16 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/feature-flags.php', 'feature-flags');
 
-        $this->app->singleton(FeatureFlagRepository::class, EloquentFeatureFlagRepository::class);
+        $this->app->singleton(FeatureFlagRepository::class, function ($app): FeatureFlagRepository {
+            /** @var array{store?: ?string, ttl?: int, prefix?: string} $cache */
+            $cache = config('feature-flags.cache', []);
+
+            return new CachingFeatureFlagRepository(
+                $app->make(EloquentFeatureFlagRepository::class),
+                $app->make(CacheFactory::class),
+                $cache,
+            );
+        });
 
         $this->app->singleton(FeatureScopeResolver::class, function ($app) {
             /** @var class-string<FeatureScopeResolver> $cls */

@@ -50,6 +50,18 @@ app(FeatureFlagManager::class)->isEnabled('new-dashboard', $scopeId);
 
 The facade resolves to the same singleton, so custom repository bindings still flow through.
 
+### Check many flags at once
+
+`allEnabled()` evaluates several keys for the same scope in a **single query** — use it
+instead of a loop of `isEnabled()` calls when you need a batch (dashboards, API payloads):
+
+```php
+FeatureFlag::allEnabled([AppFeature::NewDashboard, 'beta-search'], $scopeId);
+// => ['new-dashboard' => true, 'beta-search' => false]
+```
+
+Missing keys resolve to `false`. Scope precedence matches `isEnabled()`.
+
 ### Resolution rules
 
 1. Row exists for `(key, scope_id = $scopeId)` → use its `value`.

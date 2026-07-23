@@ -39,6 +39,40 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
         return (bool) ($row->value ?? false);
     }
 
+    public function allEnabled(array $keys, ?string $scopeId = null): array
+    {
+        /** @var array<string, bool> $result */
+        $result = array_fill_keys($keys, false);
+        if ($keys === []) {
+            return $result;
+        }
+
+        $rows = $this->query()
+            ->whereIn('key', $keys)
+            ->when(
+                $scopeId,
+                fn (Builder $q) => $q->where(fn (Builder $sub) => $sub
+                    ->where('scope_id', $scopeId)
+                    ->orWhereNull('scope_id')),
+                fn (Builder $q) => $q->whereNull('scope_id'),
+            )
+            ->tap(fn (Builder $q) => $this->timeWindowScope($q))
+            ->orderByRaw('scope_id IS NULL ASC')
+            ->get(['key', 'value', 'scope_id']);
+
+        // Ordered scope-first: the first row seen per key wins (scope beats global).
+        $seen = [];
+        foreach ($rows as $row) {
+            if (isset($seen[$row->key])) {
+                continue;
+            }
+            $seen[$row->key] = true;
+            $result[$row->key] = (bool) $row->value;
+        }
+
+        return $result;
+    }
+
     public function listForScope(?string $scopeId): array
     {
         return $this->query()
