@@ -7,6 +7,7 @@ namespace Chemaclass\FeatureFlags;
 use Chemaclass\FeatureFlags\Blade\FeatureDirective;
 use Chemaclass\FeatureFlags\Console\CreateFlagCommand;
 use Chemaclass\FeatureFlags\Console\DeleteFlagCommand;
+use Chemaclass\FeatureFlags\Console\GenerateEnumCommand;
 use Chemaclass\FeatureFlags\Console\ListFlagsCommand;
 use Chemaclass\FeatureFlags\Console\StaleFlagsCommand;
 use Chemaclass\FeatureFlags\Console\ToggleFlagCommand;
@@ -74,6 +75,7 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
                 CreateFlagCommand::class,
                 DeleteFlagCommand::class,
                 StaleFlagsCommand::class,
+                GenerateEnumCommand::class,
             ]);
         }
 
