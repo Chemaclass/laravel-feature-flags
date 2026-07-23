@@ -38,8 +38,10 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
                     ->orWhereNull('scope_id')),
                 fn (Builder $q) => $q->whereNull('scope_id'),
             )
+            ->tap(fn (Builder $q) => $this->environmentScope($q))
             ->tap(fn (Builder $q) => $this->timeWindowScope($q))
             ->orderByRaw('scope_id IS NULL ASC')
+            ->orderByRaw('environment IS NULL ASC')
             ->first();
 
         $result = $this->resolveRow($row, $key, $scopeId, $context);
@@ -115,8 +117,10 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
                     ->orWhereNull('scope_id')),
                 fn (Builder $q) => $q->whereNull('scope_id'),
             )
+            ->tap(fn (Builder $q) => $this->environmentScope($q))
             ->tap(fn (Builder $q) => $this->timeWindowScope($q))
             ->orderByRaw('scope_id IS NULL ASC')
+            ->orderByRaw('environment IS NULL ASC')
             ->get();
 
         // Ordered scope-first: the first row seen per key wins (scope beats global).
@@ -141,8 +145,12 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
                     $q->orWhere('scope_id', $scopeId);
                 }
             })
+            ->tap(fn (Builder $q) => $this->environmentScope($q))
             ->tap(fn (Builder $q) => $this->timeWindowScope($q))
+            // Least specific first so pluck's later rows (more specific) win:
+            // scope dominates environment.
             ->orderByRaw('scope_id IS NULL DESC')
+            ->orderByRaw('environment IS NULL DESC')
             ->pluck('value', 'key')
             ->toArray();
     }
@@ -227,6 +235,28 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
     private function query(): Builder
     {
         return $this->modelClass::query();
+    }
+
+    /**
+     * Limit to rows for the current environment or the env-agnostic (null) rows.
+     *
+     * @param  Builder<FeatureFlag>  $q
+     */
+    private function environmentScope(Builder $q): void
+    {
+        $env = $this->currentEnvironment();
+
+        $q->where(fn (Builder $w) => $w
+            ->whereNull('environment')
+            ->orWhere('environment', $env));
+    }
+
+    private function currentEnvironment(): string
+    {
+        /** @var string|null $override */
+        $override = config('feature-flags.environment.current');
+
+        return $override ?? (string) app()->environment();
     }
 
     /**

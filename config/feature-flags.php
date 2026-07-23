@@ -26,6 +26,15 @@ return [
     'middleware_alias' => 'feature.enabled',
 
     /*
+     * Per-environment flags. A row's `environment` column scopes it to one
+     * environment; null applies to all. By default the current environment is
+     * `app()->environment()`; set `current` to override (e.g. for testing).
+     */
+    'environment' => [
+        'current' => env('FEATURE_FLAGS_ENVIRONMENT'),
+    ],
+
+    /*
      * Evaluation cache. Flag checks are always memoized per request. Set a
      * `store` (any cache store name from config/cache.php) to also cache
      * evaluations across requests; writes bump a namespace version so a single

@@ -177,6 +177,26 @@ FeatureFlag::updateOrCreate(
 
 Outside the window, `isEnabled()` returns `false` even if `value = true`.
 
+## Per-environment values
+
+A flag row can be scoped to one environment via its `environment` column; `null` applies to
+every environment. The current environment defaults to `app()->environment()` (override with
+`feature-flags.environment.current`). Precedence, most specific first:
+
+1. `(scope = X, environment = current)`
+2. `(scope = X, environment = null)`
+3. `(scope = null, environment = current)`
+4. `(scope = null, environment = null)`
+
+```php
+FeatureFlag::updateOrCreate(
+    ['key' => 'new-ui', 'scope_id' => null, 'environment' => 'production'],
+    ['value' => false],
+);
+```
+
+Existing env-null rows are unchanged — scope still dominates environment.
+
 ## Targeting rules
 
 Gate a flag on attributes of an evaluation context. Rules are stored per flag; a matching
