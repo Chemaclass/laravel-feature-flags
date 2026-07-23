@@ -36,4 +36,13 @@ return [
         'ttl' => 60,
         'prefix' => 'feature-flags',
     ],
+
+    'events' => [
+        /*
+         * Dispatch a FlagEvaluated event on every flag check. Off by default to
+         * keep the hot path free; turn on for debugging or audit trails.
+         * FlagToggled (value flips) is always dispatched regardless of this.
+         */
+        'evaluation' => env('FEATURE_FLAGS_EVENTS_EVALUATION', false),
+    ],
 ];
