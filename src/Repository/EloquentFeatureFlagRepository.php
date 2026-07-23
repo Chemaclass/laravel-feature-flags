@@ -36,7 +36,35 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
             ->orderByRaw('scope_id IS NULL ASC')
             ->first();
 
-        return (bool) ($row->value ?? false);
+        if ($row === null || ! $row->value) {
+            return false;
+        }
+
+        return $this->passesRollout($key, $scopeId, $row->rollout_percentage);
+    }
+
+    /**
+     * Deterministic percentage rollout: the same key+scope always lands in the
+     * same bucket, so a flag at X% is enabled for a stable ~X% of scopes. Null
+     * percentage means no gate (pure boolean). For a null scope the bucket is
+     * derived from the key alone, so global rollout is effectively all-or-nothing
+     * at the threshold — percentage rollout is meant to be paired with a scope.
+     */
+    private function passesRollout(string $key, ?string $scopeId, ?int $percentage): bool
+    {
+        if ($percentage === null) {
+            return true;
+        }
+        if ($percentage <= 0) {
+            return false;
+        }
+        if ($percentage >= 100) {
+            return true;
+        }
+
+        $bucket = crc32($key.':'.($scopeId ?? '')) % 100;
+
+        return $bucket < $percentage;
     }
 
     public function allEnabled(array $keys, ?string $scopeId = null): array

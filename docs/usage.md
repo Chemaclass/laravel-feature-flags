@@ -152,6 +152,28 @@ FeatureFlag::updateOrCreate(
 
 Outside the window, `isEnabled()` returns `false` even if `value = true`.
 
+## Percentage rollout
+
+Set `rollout_percentage` (0–100) to enable a flag for a deterministic slice of scopes.
+The same key+scope always lands in the same bucket, so a flag at `30` is on for a stable
+~30% of scopes and never flips between checks:
+
+```php
+FeatureFlag::updateOrCreate(
+    ['key' => 'new-checkout', 'scope_id' => null],
+    ['value' => true, 'rollout_percentage' => 30],
+);
+
+FeatureFlag::isEnabled('new-checkout', $userId); // true for ~30% of $userId values
+```
+
+- `null` (default) → no gate, pure boolean.
+- `value = false` → off regardless of percentage.
+- The bucket is derived from `key + scopeId`, so **pair rollout with a scope**. For a global
+  (null scope) flag the bucket depends on the key alone, making it effectively all-or-nothing
+  at the threshold.
+- A scoped override row wins over the global row and applies **its own** percentage.
+
 ## Dev marker
 
 `is_dev = true` is a hint your app can use to hide a flag from non-engineering users or block production exposure. The package doesn't enforce anything. Your code decides what `is_dev` means.
