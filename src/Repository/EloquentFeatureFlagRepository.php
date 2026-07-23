@@ -6,10 +6,12 @@ namespace Chemaclass\FeatureFlags\Repository;
 
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
+use Chemaclass\FeatureFlags\DTO\VariantResult;
 use Chemaclass\FeatureFlags\Events\FlagEvaluated;
 use Chemaclass\FeatureFlags\Events\FlagToggled;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
 use Chemaclass\FeatureFlags\Targeting\RuleEvaluator;
+use Chemaclass\FeatureFlags\Variants\VariantSelector;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -21,6 +23,7 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
     public function __construct(
         private readonly Dispatcher $events,
         private readonly RuleEvaluator $rules = new RuleEvaluator,
+        private readonly VariantSelector $variants = new VariantSelector,
     ) {
         /** @var class-string<FeatureFlag> $cls */
         $cls = config('feature-flags.model', FeatureFlag::class);
@@ -187,6 +190,28 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
         }
 
         return $result;
+    }
+
+    public function variant(string $key, ?string $scopeId = null, array $context = []): ?VariantResult
+    {
+        if (! $this->isEnabled($key, $scopeId, $context)) {
+            return null;
+        }
+
+        $row = $this->winningRow($key, $scopeId);
+        $variants = $row?->variants;
+        if ($row === null || ! is_array($variants) || $variants === []) {
+            return null;
+        }
+
+        $name = $this->variants->select($variants, $key, $scopeId);
+        if ($name === null) {
+            return null;
+        }
+
+        $payloads = $row->variant_payloads ?? [];
+
+        return new VariantResult($name, $payloads[$name] ?? null);
     }
 
     public function listForScope(?string $scopeId): array

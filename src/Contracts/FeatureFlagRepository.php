@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chemaclass\FeatureFlags\Contracts;
 
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
+use Chemaclass\FeatureFlags\DTO\VariantResult;
 
 interface FeatureFlagRepository
 {
@@ -21,6 +22,14 @@ interface FeatureFlagRepository
      * @return array<string, bool>
      */
     public function allEnabled(array $keys, ?string $scopeId = null, array $context = []): array;
+
+    /**
+     * Select the active variant for a flag, or null when it has no variants or
+     * is disabled for the scope.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    public function variant(string $key, ?string $scopeId = null, array $context = []): ?VariantResult;
 
     /**
      * @return array<string, bool>

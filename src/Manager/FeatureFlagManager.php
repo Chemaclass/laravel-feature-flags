@@ -7,6 +7,7 @@ namespace Chemaclass\FeatureFlags\Manager;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\Contracts\FeatureKey;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
+use Chemaclass\FeatureFlags\DTO\VariantResult;
 
 final readonly class FeatureFlagManager
 {
@@ -39,6 +40,19 @@ final readonly class FeatureFlagManager
         );
 
         return $this->repository->allEnabled($keys, $scopeId, $context);
+    }
+
+    /**
+     * Select the active variant for a flag, or null when it has none or is
+     * disabled for the scope.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    public function variant(FeatureKey|string $flag, ?string $scopeId = null, array $context = []): ?VariantResult
+    {
+        $key = $flag instanceof FeatureKey ? $flag->key() : $flag;
+
+        return $this->repository->variant($key, $scopeId, $context);
     }
 
     /**
