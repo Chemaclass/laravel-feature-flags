@@ -6,7 +6,10 @@ namespace Chemaclass\FeatureFlags\Repository;
 
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
+use Chemaclass\FeatureFlags\Events\FlagEvaluated;
+use Chemaclass\FeatureFlags\Events\FlagToggled;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Builder;
 
 final class EloquentFeatureFlagRepository implements FeatureFlagRepository
@@ -14,8 +17,9 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
     /** @var class-string<FeatureFlag> */
     private string $modelClass;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly Dispatcher $events,
+    ) {
         /** @var class-string<FeatureFlag> $cls */
         $cls = config('feature-flags.model', FeatureFlag::class);
         $this->modelClass = $cls;
@@ -36,11 +40,15 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
             ->orderByRaw('scope_id IS NULL ASC')
             ->first();
 
-        if ($row === null || ! $row->value) {
-            return false;
+        $result = $row !== null && $row->value
+            ? $this->passesRollout($key, $scopeId, $row->rollout_percentage)
+            : false;
+
+        if (config('feature-flags.events.evaluation', false)) {
+            $this->events->dispatch(new FlagEvaluated($key, $scopeId, $result));
         }
 
-        return $this->passesRollout($key, $scopeId, $row->rollout_percentage);
+        return $result;
     }
 
     /**
@@ -169,8 +177,11 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
     {
         /** @var FeatureFlag $m */
         $m = $this->modelClass::findOrFail($id);
-        $m->value = ! $m->value;
+        $oldValue = (bool) $m->value;
+        $m->value = ! $oldValue;
         $m->save();
+
+        $this->events->dispatch(new FlagToggled($m->key, $m->scope_id, $oldValue, $m->value));
 
         return $m->value;
     }

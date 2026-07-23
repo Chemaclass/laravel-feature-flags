@@ -130,6 +130,28 @@ $this->app->singleton(FeatureFlagRepository::class, function ($app) {
 });
 ```
 
+## Events
+
+Two events let you observe the flag lifecycle without patching the package:
+
+| Event | When | Payload |
+|-------|------|---------|
+| `FlagToggled` | a flag's value is flipped via `toggleValue()` (e.g. the admin UI toggle) | `key`, `scopeId`, `oldValue`, `newValue` |
+| `FlagEvaluated` | a flag is evaluated — **off by default** | `key`, `scopeId`, `result` |
+
+`FlagEvaluated` is gated by `feature-flags.events.evaluation` (default `false`) to keep the hot
+path free; enable it for debugging or audit trails. With the caching layer active it fires only
+on a real evaluation, not a cache hit.
+
+```php
+use Chemaclass\FeatureFlags\Events\FlagToggled;
+use Illuminate\Support\Facades\Event;
+
+Event::listen(function (FlagToggled $e): void {
+    Log::info("flag {$e->key} => ".($e->newValue ? 'on' : 'off'), ['scope' => $e->scopeId]);
+});
+```
+
 ## Adding columns
 
 1. Add a migration alongside the published one.
