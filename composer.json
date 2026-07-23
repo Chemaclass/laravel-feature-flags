@@ -26,11 +26,15 @@
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
+        "laravel/pennant": "^1.24",
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^9.0|^10.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0",
         "phpstan/phpstan": "^2.0"
+    },
+    "suggest": {
+        "laravel/pennant": "Enables the optional Pennant bridge so Feature::active() resolves through this package (^1.24)."
     },
     "autoload": {
         "psr-4": {

@@ -14,6 +14,7 @@ use Chemaclass\FeatureFlags\Contracts\FeatureKey;
 use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
 use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
+use Chemaclass\FeatureFlags\Pennant\FeatureFlagsPennantDriver;
 use Chemaclass\FeatureFlags\Repository\CachingFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Repository\EloquentFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
@@ -21,6 +22,7 @@ use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Pennant\Feature;
 
 final class FeatureFlagsServiceProvider extends ServiceProvider
 {
@@ -73,6 +75,8 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
             ]);
         }
 
+        $this->registerPennantDriver();
+
         $this->publishes([
             __DIR__.'/../config/feature-flags.php' => config_path('feature-flags.php'),
         ], 'feature-flags-config');
@@ -95,5 +99,25 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/feature-flags'),
             __DIR__.'/../routes/admin.php' => base_path('routes/feature-flags.php'),
         ], 'feature-flags');
+    }
+
+    /**
+     * Register the optional Laravel Pennant bridge. No-op unless Pennant is
+     * installed and feature-flags.pennant.enabled is true, so the package has
+     * zero impact when Pennant is absent.
+     */
+    private function registerPennantDriver(): void
+    {
+        if (! (bool) config('feature-flags.pennant.enabled', false)) {
+            return;
+        }
+        if (! class_exists(Feature::class)) {
+            return;
+        }
+
+        Feature::extend(
+            (string) config('feature-flags.pennant.driver', 'feature-flags'),
+            fn ($app): FeatureFlagsPennantDriver => $app->make(FeatureFlagsPennantDriver::class),
+        );
     }
 }
