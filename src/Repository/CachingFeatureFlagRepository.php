@@ -6,6 +6,7 @@ namespace Chemaclass\FeatureFlags\Repository;
 
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
+use Chemaclass\FeatureFlags\DTO\VariantResult;
 use Closure;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -79,6 +80,13 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
         }
 
         return $result;
+    }
+
+    public function variant(string $key, ?string $scopeId = null, array $context = []): ?VariantResult
+    {
+        // Variant selection is deterministic for a given key+scope; delegate
+        // straight to the inner repository (it internally reuses evaluation).
+        return $this->inner->variant($key, $scopeId, $context);
     }
 
     public function listForScope(?string $scopeId): array

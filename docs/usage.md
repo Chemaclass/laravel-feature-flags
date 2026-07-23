@@ -223,6 +223,33 @@ FeatureFlag::isEnabled('new-billing', $userId, ['plan' => 'pro', 'country' => 'U
 - No matching rule → falls back to the boolean `value` + rollout.
 - The context is part of the cache key, so different contexts never collide.
 
+## Variants (A/B/n + payloads)
+
+A flag can carry weighted variants and per-variant payloads. `variant()` returns the
+deterministically selected variant for a scope (same key+scope → same variant), or `null`
+when the flag has no variants or is disabled:
+
+```php
+FeatureFlag::updateOrCreate(
+    ['key' => 'homepage', 'scope_id' => null],
+    [
+        'value' => true,
+        'variants' => [
+            ['name' => 'control', 'weight' => 50],
+            ['name' => 'blue', 'weight' => 50],
+        ],
+        'variant_payloads' => ['blue' => ['cta' => 'Start free trial']],
+    ],
+);
+
+$variant = FeatureFlag::variant('homepage', $userId);
+$variant?->name;    // 'control' | 'blue'
+$variant?->payload; // ['cta' => ...] for 'blue', null otherwise
+```
+
+Weights need not sum to 100 (they're normalized). The selection salt is independent of the
+percentage-rollout bucket, so the two decisions don't correlate.
+
 ## Percentage rollout
 
 Set `rollout_percentage` (0–100) to enable a flag for a deterministic slice of scopes.
