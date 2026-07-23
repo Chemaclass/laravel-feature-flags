@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>laravel-feature-flags — feature flags for Laravel, nothing but your database</title>
+<meta name="description" content="A full feature-flag toolkit for Laravel: on/off toggles, attribute targeting, percentage rollouts, A/B variants, per-environment values, and a Blade admin UI — no external service.">
+<style>
+  :root{
+    --bg:#fbfbfd; --bg2:#ffffff; --fg:#1a1a22; --muted:#5b5b6b; --line:#e7e7ee;
+    --brand:#6366f1; --brand2:#8b5cf6; --brand3:#d946ef; --on:#10b981; --off:#d4d4d8;
+    --code-bg:#0f1020; --code-fg:#e7e7f5; --chip:#eef0ff; --chip-fg:#4f46e5;
+    --card:#ffffff; --shadow:0 1px 2px rgba(20,20,40,.06),0 8px 30px rgba(20,20,40,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0a0a0f; --bg2:#0d0d15; --fg:#ececf4; --muted:#9a9ab0; --line:#22222e;
+      --off:#3f3f46; --chip:#1c1c2c; --chip-fg:#a5b4fc; --card:#101019;
+      --code-bg:#08080f; --code-fg:#e7e7f5; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 40px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0a0a0f;--bg2:#0d0d15;--fg:#ececf4;--muted:#9a9ab0;--line:#22222e;--off:#3f3f46;
+    --chip:#1c1c2c;--chip-fg:#a5b4fc;--card:#101019;--code-bg:#08080f;--code-fg:#e7e7f5;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 40px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#fbfbfd;--bg2:#ffffff;--fg:#1a1a22;--muted:#5b5b6b;--line:#e7e7ee;--off:#d4d4d8;
+    --chip:#eef0ff;--chip-fg:#4f46e5;--card:#ffffff;--code-bg:#0f1020;--code-fg:#e7e7f5;
+    --shadow:0 1px 2px rgba(20,20,40,.06),0 8px 30px rgba(20,20,40,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--fg);
+    font:16px/1.6 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .grad{background:linear-gradient(120deg,var(--brand),var(--brand2) 45%,var(--brand3));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(14px);
+    background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+  .logo .mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;
+    background:linear-gradient(135deg,var(--brand),var(--brand2),var(--brand3));box-shadow:0 4px 14px rgba(99,102,241,.35)}
+  .nav-links{display:flex;align-items:center;gap:22px;font-size:14px;color:var(--muted)}
+  .nav-links a{text-decoration:none}.nav-links a:hover{color:var(--fg)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;font-weight:600;
+    font-size:14px;text-decoration:none;border:1px solid var(--line);background:var(--card);transition:.15s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:none;
+    box-shadow:0 6px 20px rgba(99,102,241,.35)}
+  #theme{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:9px;width:34px;height:34px;
+    display:grid;place-items:center;color:var(--muted)}
+
+  /* hero */
+  header.hero{padding:76px 0 40px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:-40% 0 auto 0;height:420px;z-index:-1;
+    background:radial-gradient(60% 100% at 50% 0,rgba(139,92,246,.16),transparent 70%)}
+  .pill{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:600;color:var(--chip-fg);
+    background:var(--chip);border:1px solid color-mix(in srgb,var(--chip-fg) 30%,transparent);
+    padding:5px 12px;border-radius:999px;margin-bottom:22px}
+  h1{font-size:clamp(34px,6vw,58px);line-height:1.05;letter-spacing:-.03em;margin:0 0 18px;font-weight:800}
+  .sub{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:640px;margin:0 auto 30px}
+  .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+  .center{text-align:center}
+  .install{display:inline-flex;align-items:center;gap:12px;background:var(--code-bg);color:var(--code-fg);
+    padding:12px 16px;border-radius:12px;font-size:14px;box-shadow:var(--shadow)}
+  .install .dollar{color:#8b8ba7}
+  .oneliner{max-width:520px;margin:26px auto 0}
+
+  /* code */
+  pre{background:var(--code-bg);color:var(--code-fg);border-radius:14px;padding:18px 20px;overflow-x:auto;
+    font-size:13.5px;line-height:1.7;box-shadow:var(--shadow);margin:0;tab-size:2}
+  pre .c{color:#7d7da0}.tk{color:#c4b5fd}.st{color:#86efac}.fn{color:#93c5fd}.kw{color:#f0abfc}.nm{color:#fcd34d}
+
+  section{padding:56px 0}
+  .eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);margin:0 0 10px}
+  h2{font-size:clamp(26px,3.6vw,36px);letter-spacing:-.02em;margin:0 0 12px;font-weight:800}
+  .lead{color:var(--muted);max-width:620px;margin:0 0 34px;font-size:17px}
+
+  /* flow */
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
+  .node{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);position:relative}
+  .node h4{margin:0 0 6px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .node p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .node .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;
+    background:var(--chip);color:var(--chip-fg)}
+  .flow .arrow{position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:var(--muted);z-index:2;font-size:16px}
+  .flow-note{margin-top:16px;font-size:13px;color:var(--muted);text-align:center}
+  .fanout{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+  .leaf{background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--brand) 6%,var(--card)));
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center;font-size:13px;font-weight:600}
+  .leaf small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:3px}
+
+  /* admin mockup */
+  .browser{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .chrome{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,var(--card))}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .url{margin-left:10px;font-size:12px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:4px 12px;flex:1}
+  .admin{padding:18px}
+  .admin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .admin-title{display:flex;align-items:center;gap:10px;font-weight:700}
+  .admin-title .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand3));display:grid;place-items:center;color:#fff}
+  .admin-sub{font-size:12px;color:var(--muted);font-weight:400}
+  .newbtn{font-size:12.5px;font-weight:600;color:#fff;background:#18181b;padding:7px 12px;border-radius:9px}
+  @media (prefers-color-scheme:dark){.newbtn{background:#fff;color:#18181b}}
+  :root[data-theme="dark"] .newbtn{background:#fff;color:#18181b}
+  :root[data-theme="light"] .newbtn{background:#18181b;color:#fff}
+  .flagrow{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:color-mix(in srgb,var(--brand) 4%,var(--card))}
+  .flagrow.scoped{margin-left:26px;background:var(--card)}
+  .fkey{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+  .badge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.02em}
+  .b-global{background:var(--chip);color:var(--chip-fg)}
+  .b-scope{background:#e0f2fe;color:#0369a1}.b-scope.b2{background:#dcfce7;color:#15803d}
+  @media (prefers-color-scheme:dark){.b-scope{background:#0c2a3f;color:#7dd3fc}.b-scope.b2{background:#0d2f1e;color:#86efac}}
+  .b-dev{background:#fef3c7;color:#92400e}
+  @media (prefers-color-scheme:dark){.b-dev{background:#3a2e0a;color:#fcd34d}}
+  .fhint{font-size:12px;color:var(--muted);margin-left:auto;margin-right:8px}
+  .switch{width:42px;height:23px;border-radius:999px;position:relative;flex:none;transition:.2s;cursor:pointer}
+  .switch.on{background:var(--on)}.switch.off{background:var(--off)}
+  .switch .knob{position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch.on .knob{transform:translateX(19px)}
+  .pct{font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace}
+
+  /* features */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .fc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);transition:.15s}
+  .fc:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+  .fc .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;margin-bottom:11px;
+    background:var(--chip);color:var(--chip-fg)}
+  .fc h4{margin:0 0 5px;font-size:15px}
+  .fc p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .cols h4{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:600}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:13.5px}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  footer a{color:var(--brand);text-decoration:none}
+
+  @media(max-width:840px){
+    .flow,.fanout,.grid{grid-template-columns:1fr 1fr}
+    .flow .arrow{display:none}
+    .cols{grid-template-columns:1fr}
+    .flagrow.scoped{margin-left:14px}
+  }
+  @media(max-width:520px){.flow,.fanout,.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo"><span class="mark">⚑</span> laravel-feature-flags</div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#ui">Admin UI</a>
+      <a href="#features">Features</a>
+      <a href="https://github.com/Chemaclass/laravel-feature-flags/tree/main/docs">Docs</a>
+      <a class="btn" href="https://github.com/Chemaclass/laravel-feature-flags">GitHub</a>
+      <button id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap center">
+    <span class="pill">⚡ Zero infra · just your database</span>
+    <h1>Feature flags for Laravel,<br><span class="grad">nothing but your database.</span></h1>
+    <p class="sub">Simple on/off toggles when that's all you want. Attribute targeting, percentage
+      rollouts, A/B variants, per-environment values, and a Blade admin UI when you need more.</p>
+    <div class="hero-cta">
+      <a class="btn primary" href="https://github.com/Chemaclass/laravel-feature-flags">★ Star on GitHub</a>
+      <a class="btn" href="https://packagist.org/packages/chemaclass/laravel-feature-flags">Packagist</a>
+      <a class="btn" href="#how">See how it works ↓</a>
+    </div>
+    <div class="install mono"><span class="dollar">$</span> composer require chemaclass/laravel-feature-flags</div>
+    <div class="oneliner">
+<pre><span class="kw">if</span> (<span class="tk">FeatureFlag</span>::<span class="fn">isEnabled</span>(<span class="st">'new-dashboard'</span>)) {
+    <span class="c">// ship it 🚀</span>
+}</pre>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <p class="eyebrow">How it works</p>
+    <h2>Back end to front end, one clean path</h2>
+    <p class="lead">Your DB is the source of truth. A cached repository reads it, a manager wraps it,
+      and you reach flags through a facade, Blade, middleware, or Artisan — pick whatever fits.</p>
+
+    <div class="flow">
+      <div class="node">
+        <h4><span class="ic">🗄️</span> Database</h4>
+        <p><code>feature_flags</code> table. Key, scope, environment, rules, variants — one row per override.</p>
+        <span class="arrow">→</span>
+      </div>
+      <div class="node">
+        <h4><span class="ic">📦</span> Repository</h4>
+        <p>Evaluates kill-switch → rules → rollout → boolean. Request-memoized + optional cache store.</p>
+        <span class="arrow">→</span>
+      </div>
+      <div class="node">
+        <h4><span class="ic">🧭</span> Manager</h4>
+        <p>Thin application service. Normalizes enum keys, threads the targeting context.</p>
+        <span class="arrow">→</span>
+      </div>
+      <div class="node">
+        <h4><span class="ic">🎯</span> Your app</h4>
+        <p>Reach it four ways — all resolve the same scope and context.</p>
+      </div>
+    </div>
+
+    <div class="fanout">
+      <div class="leaf">Facade<small>FeatureFlag::isEnabled()</small></div>
+      <div class="leaf">Blade<small>@feature … @endfeature</small></div>
+      <div class="leaf">Middleware<small>feature.enabled:key</small></div>
+      <div class="leaf">Artisan<small>flag:list / toggle / sync</small></div>
+    </div>
+    <p class="flow-note">Swap the repository (Redis, remote, in-memory) without touching a single call site — it's just a contract.</p>
+  </div>
+</section>
+
+<section id="ui" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <p class="eyebrow">The front end</p>
+    <h2>A Blade admin UI, published into your app</h2>
+    <p class="lead">Flags grouped by key, scope overrides nested underneath, real sliding toggles,
+      inline editing, dev markers, dark mode. No build step, no SPA — just a route.</p>
+
+    <div class="browser">
+      <div class="chrome">
+        <span class="dot" style="background:#ff5f57"></span>
+        <span class="dot" style="background:#febc2e"></span>
+        <span class="dot" style="background:#28c840"></span>
+        <span class="url mono">yourapp.test/admin/feature-flags</span>
+      </div>
+      <div class="admin">
+        <div class="admin-top">
+          <div class="admin-title"><span class="mark">⚑</span> Feature Flags <span class="admin-sub">· 4 keys · 6 rows</span></div>
+          <span class="newbtn">+ New flag</span>
+        </div>
+
+        <div class="flagrow">
+          <span class="fkey">new-dashboard <span class="badge b-global">GLOBAL</span></span>
+          <span class="fhint">Q3 redesign rollout</span>
+          <span class="switch on"><span class="knob"></span></span>
+        </div>
+        <div class="flagrow scoped">
+          <span class="fkey">new-dashboard <span class="badge b-scope">team-42</span></span>
+          <span class="fhint">early access</span>
+          <span class="switch on"><span class="knob"></span></span>
+        </div>
+
+        <div class="flagrow">
+          <span class="fkey">beta-search <span class="badge b-global">GLOBAL</span> <span class="badge b-dev">DEV</span></span>
+          <span class="pct">30% rollout</span>
+          <span class="fhint" style="margin-left:14px">gradual ramp</span>
+          <span class="switch on"><span class="knob"></span></span>
+        </div>
+
+        <div class="flagrow">
+          <span class="fkey">new-billing <span class="badge b-global">GLOBAL</span></span>
+          <span class="fhint">targeted: plan = pro</span>
+          <span class="switch off"><span class="knob"></span></span>
+        </div>
+        <div class="flagrow scoped">
+          <span class="fkey">new-billing <span class="badge b-scope b2">region-eu</span></span>
+          <span class="fhint">enabled_until 2026-12-01</span>
+          <span class="switch on"><span class="knob"></span></span>
+        </div>
+      </div>
+    </div>
+    <p class="flow-note">Prefer your own layout? Disable the bundled routes and publish just the view.</p>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <p class="eyebrow">What's in the box</p>
+    <h2>Simple by default, a platform when you need it</h2>
+    <p class="lead">Every feature is opt-in and back-compat. Start with a boolean; layer the rest on the same rows.</p>
+    <div class="grid">
+      <div class="fc"><div class="ic">🔀</div><h4>Per-scope overrides</h4><p>Scope is any string — team, org, region, cohort, user. Scoped row beats global.</p></div>
+      <div class="fc"><div class="ic">🎯</div><h4>Attribute targeting</h4><p>Rules on a context: <code>plan = pro AND country in (DE,AT)</code>. 11 operators.</p></div>
+      <div class="fc"><div class="ic">📈</div><h4>Percentage rollout</h4><p>Deterministic bucketing — a stable ~X% of scopes, never flips between checks.</p></div>
+      <div class="fc"><div class="ic">🧪</div><h4>A/B/n variants</h4><p>Weighted variants with per-variant payloads for experiments and remote config.</p></div>
+      <div class="fc"><div class="ic">🌍</div><h4>Environments</h4><p>Same key, different value per environment. Null applies everywhere.</p></div>
+      <div class="fc"><div class="ic">🔗</div><h4>Prerequisites & kill-switch</h4><p>Require other flags; master off-switch to kill anything instantly.</p></div>
+      <div class="fc"><div class="ic">⏱️</div><h4>Time windows</h4><p><code>enabled_from</code> / <code>enabled_until</code> gating for scheduled launches.</p></div>
+      <div class="fc"><div class="ic">⚡</div><h4>Caching & real-time</h4><p>Request memoization always on; optional store with instant cross-node invalidation.</p></div>
+      <div class="fc"><div class="ic">📝</div><h4>Audit log</h4><p>Persist every toggle with actor + a per-flag history panel in the admin UI.</p></div>
+      <div class="fc"><div class="ic">🧹</div><h4>Stale-flag detection</h4><p><code>flag:stale</code> finds flags safe to delete — kill flag debt.</p></div>
+      <div class="fc"><div class="ic">🏷️</div><h4>Typed codegen</h4><p><code>flag:generate</code> writes a typed enum from your keys for IDE autocomplete.</p></div>
+      <div class="fc"><div class="ic">🔧</div><h4>GitOps & Pennant</h4><p><code>flag:sync</code> reconciles from a versioned file; optional Laravel Pennant bridge.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg2);border-top:1px solid var(--line)">
+  <div class="wrap">
+    <p class="eyebrow">Show me the code</p>
+    <h2>Reads like Laravel</h2>
+    <p class="lead">From a one-line boolean to attribute targeting and variants — same facade, same rows.</p>
+    <div class="cols">
+      <div>
+        <h4>Target by attributes</h4>
+<pre><span class="tk">FeatureFlag</span>::<span class="fn">updateOrCreate</span>(
+  [<span class="st">'key'</span> => <span class="st">'new-billing'</span>, <span class="st">'scope_id'</span> => <span class="kw">null</span>],
+  [
+    <span class="st">'value'</span> => <span class="kw">false</span>,
+    <span class="st">'rules'</span> => [
+      [<span class="st">'when'</span> => [[<span class="st">'attr'</span>=><span class="st">'plan'</span>,<span class="st">'op'</span>=><span class="st">'eq'</span>,<span class="st">'value'</span>=><span class="st">'pro'</span>]],
+       <span class="st">'then'</span> => <span class="kw">true</span>],
+    ],
+  ],
+);
+
+<span class="tk">FeatureFlag</span>::<span class="fn">isEnabled</span>(<span class="st">'new-billing'</span>, <span class="nm">$userId</span>, [<span class="st">'plan'</span>=><span class="st">'pro'</span>]);
+<span class="c">// → true</span></pre>
+      </div>
+      <div>
+        <h4>In Blade &amp; the CLI</h4>
+<pre><span class="c">{{-- resources/views/home.blade.php --}}</span>
+<span class="kw">@feature</span>(<span class="st">'new-dashboard'</span>)
+  &lt;x-new-dashboard /&gt;
+<span class="kw">@else</span>
+  &lt;x-legacy-dashboard /&gt;
+<span class="kw">@endfeature</span>
+
+<span class="c"># create, roll out, ship</span>
+<span class="dollar" style="color:#8b8ba7">$</span> php artisan flag:create new-dashboard --value=1
+<span class="dollar" style="color:#8b8ba7">$</span> php artisan flag:toggle beta-search
+<span class="dollar" style="color:#8b8ba7">$</span> php artisan flag:stale --days=30
+<span class="dollar" style="color:#8b8ba7">$</span> php artisan flag:sync --prune</pre>
+      </div>
+    </div>
+    <div class="center" style="margin-top:34px">
+      <a class="btn primary" href="https://github.com/Chemaclass/laravel-feature-flags/tree/main/docs">Read the docs</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>MIT · PHP ^8.3 · Laravel 11 &amp; 12</div>
+    <div>
+      <a href="https://github.com/Chemaclass/laravel-feature-flags">GitHub</a> ·
+      <a href="https://packagist.org/packages/chemaclass/laravel-feature-flags">Packagist</a> ·
+      <a href="https://github.com/Chemaclass/laravel-feature-flags/tree/main/docs">Docs</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var root=document.documentElement, key='ff-theme';
+    var stored=localStorage.getItem(key);
+    if(stored) root.setAttribute('data-theme',stored);
+    document.getElementById('theme').addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme')
+        || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+      var next=cur==='dark'?'light':'dark';
+      root.setAttribute('data-theme',next);localStorage.setItem(key,next);
+    });
+  })();
+</script>
+</body>
+</html>
