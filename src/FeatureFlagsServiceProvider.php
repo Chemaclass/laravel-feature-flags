@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Chemaclass\FeatureFlags;
 
+use Chemaclass\FeatureFlags\Console\CreateFlagCommand;
+use Chemaclass\FeatureFlags\Console\DeleteFlagCommand;
+use Chemaclass\FeatureFlags\Console\ListFlagsCommand;
+use Chemaclass\FeatureFlags\Console\ToggleFlagCommand;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
 use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
@@ -41,6 +45,15 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
 
         if ((bool) config('feature-flags.admin.enabled', true)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
+        }
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ListFlagsCommand::class,
+                ToggleFlagCommand::class,
+                CreateFlagCommand::class,
+                DeleteFlagCommand::class,
+            ]);
         }
 
         $this->publishes([
