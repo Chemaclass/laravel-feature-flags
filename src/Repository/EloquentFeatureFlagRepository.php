@@ -233,6 +233,44 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
             ->toArray();
     }
 
+    public function staleKeys(int $days): array
+    {
+        $cutoff = now()->subDays($days);
+        $rows = $this->query()->get(['key', 'value', 'updated_at', 'enabled_from', 'enabled_until']);
+
+        $stale = [];
+        foreach ($rows->groupBy('key') as $key => $group) {
+            // Time-windowed flags are intentionally variable — never "stale".
+            if ($group->contains(fn (FeatureFlag $r) => $r->enabled_from !== null || $r->enabled_until !== null)) {
+                continue;
+            }
+            // Must be constant across all rows and untouched since the cutoff.
+            if ($group->pluck('value')->unique()->count() !== 1) {
+                continue;
+            }
+            $lastTouched = $group->max('updated_at');
+            if ($lastTouched === null || $lastTouched->greaterThan($cutoff)) {
+                continue;
+            }
+
+            $stale[] = [
+                'key' => (string) $key,
+                'value' => (bool) $group->first()->value,
+                'days' => (int) $lastTouched->diffInDays(now()),
+            ];
+        }
+
+        return $stale;
+    }
+
+    public function distinctKeys(): array
+    {
+        /** @var list<string> $keys */
+        $keys = $this->query()->distinct()->orderBy('key')->pluck('key')->all();
+
+        return $keys;
+    }
+
     public function findById(string $id): ?FeatureTransfer
     {
         $m = $this->modelClass::find($id);

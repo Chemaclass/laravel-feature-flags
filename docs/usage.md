@@ -311,7 +311,12 @@ php artisan flag:list --scope=team-1        # table of keys + effective value
 php artisan flag:create new-checkout --value=1 --scope=team-1 --hint="Q3 rollout"
 php artisan flag:toggle new-checkout --scope=team-1
 php artisan flag:delete 01J...              # by row id
+php artisan flag:stale --days=30            # flags safe to retire (unchanged + constant)
+php artisan flag:stale --days=30 --json     # JSON for CI
 ```
+
+`flag:stale` reports flags untouched for N+ days that hold a single constant value across all
+their rows (time-windowed flags are excluded) — your flag-debt cleanup list.
 
 All commands go through `FeatureFlagManager` (never Eloquent directly) and exit `1` on
 not-found so scripts can react.
