@@ -63,6 +63,24 @@ final readonly class FeatureFlagManager
         return $this->repository->listForScope($scopeId);
     }
 
+    /**
+     * Keys unchanged for $days and constant across all rows (cleanup candidates).
+     *
+     * @return list<array{key: string, value: bool, days: int}>
+     */
+    public function staleFlags(int $days): array
+    {
+        return $this->repository->staleKeys($days);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function distinctKeys(): array
+    {
+        return $this->repository->distinctKeys();
+    }
+
     public function findById(string $id): ?FeatureTransfer
     {
         return $this->repository->findById($id);

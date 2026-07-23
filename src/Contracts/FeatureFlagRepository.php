@@ -36,6 +36,21 @@ interface FeatureFlagRepository
      */
     public function listForScope(?string $scopeId): array;
 
+    /**
+     * Keys unchanged for at least $days and constant across all their rows —
+     * candidates for cleanup.
+     *
+     * @return list<array{key: string, value: bool, days: int}>
+     */
+    public function staleKeys(int $days): array;
+
+    /**
+     * Distinct flag keys currently stored.
+     *
+     * @return list<string>
+     */
+    public function distinctKeys(): array;
+
     public function findById(string $id): ?FeatureTransfer;
 
     public function findByKeyAndScope(string $key, ?string $scopeId): ?FeatureTransfer;

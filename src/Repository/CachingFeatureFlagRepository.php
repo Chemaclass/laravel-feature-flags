@@ -104,6 +104,16 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
         return $this->listMemo[$memoKey] = $value;
     }
 
+    public function staleKeys(int $days): array
+    {
+        return $this->inner->staleKeys($days);
+    }
+
+    public function distinctKeys(): array
+    {
+        return $this->inner->distinctKeys();
+    }
+
     public function findById(string $id): ?FeatureTransfer
     {
         return $this->inner->findById($id);
