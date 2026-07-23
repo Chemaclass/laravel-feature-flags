@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Chemaclass\FeatureFlags;
 
+use Chemaclass\FeatureFlags\Blade\FeatureDirective;
 use Chemaclass\FeatureFlags\Console\CreateFlagCommand;
 use Chemaclass\FeatureFlags\Console\DeleteFlagCommand;
 use Chemaclass\FeatureFlags\Console\ListFlagsCommand;
 use Chemaclass\FeatureFlags\Console\ToggleFlagCommand;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
+use Chemaclass\FeatureFlags\Contracts\FeatureKey;
 use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
 use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
@@ -17,6 +19,7 @@ use Chemaclass\FeatureFlags\Repository\EloquentFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
 final class FeatureFlagsServiceProvider extends ServiceProvider
@@ -53,6 +56,9 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
 
         $alias = (string) config('feature-flags.middleware_alias', 'feature.enabled');
         $router->aliasMiddleware($alias, EnsureFeatureIsActive::class);
+
+        // @feature('key') ... @endfeature (plus @unlessfeature / @elsefeature).
+        Blade::if('feature', fn (FeatureKey|string $flag, ?string $scopeId = null): bool => $this->app->make(FeatureDirective::class)->isEnabled($flag, $scopeId));
 
         if ((bool) config('feature-flags.admin.enabled', true)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
