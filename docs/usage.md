@@ -62,6 +62,31 @@ FeatureFlag::allEnabled([AppFeature::NewDashboard, 'beta-search'], $scopeId);
 
 Missing keys resolve to `false`. Scope precedence matches `isEnabled()`.
 
+### In Blade templates
+
+Use the `@feature` conditional. With no scope it resolves the current scope through the
+bound resolver — same behavior as the middleware:
+
+```blade
+@feature('new-dashboard')
+    <x-new-dashboard />
+@else
+    <x-legacy-dashboard />
+@endfeature
+
+{{-- Inverse --}}
+@unlessfeature('beta-search')
+    <x-classic-search />
+@endfeature
+
+{{-- Explicit scope overrides the resolver --}}
+@feature('new-dashboard', $team->id)
+    <x-new-dashboard />
+@endfeature
+```
+
+Close both `@feature` and `@unlessfeature` with `@endfeature`.
+
 ### Resolution rules
 
 1. Row exists for `(key, scope_id = $scopeId)` → use its `value`.
