@@ -81,6 +81,14 @@ final readonly class FeatureFlagManager
         return $this->repository->distinctKeys();
     }
 
+    /**
+     * @return list<FeatureTransfer>
+     */
+    public function allFlags(): array
+    {
+        return $this->repository->allFlags();
+    }
+
     public function findById(string $id): ?FeatureTransfer
     {
         return $this->repository->findById($id);

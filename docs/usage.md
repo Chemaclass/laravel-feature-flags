@@ -325,6 +325,22 @@ php artisan flag:generate --class="App\Features\AppFeature"
 # writes app/Features/AppFeature.php implementing FeatureKey (--force to overwrite)
 ```
 
+Keep flags in version control and reconcile them into the DB (config-as-code / GitOps):
+
+```php
+// feature-flags.php (config feature-flags.sync.path)
+return [
+    ['key' => 'new-checkout', 'value' => true, 'hint' => 'Q3'],
+    ['key' => 'beta-search', 'value' => false, 'rollout_percentage' => 20],
+];
+```
+
+```bash
+php artisan flag:sync                 # upsert defined flags (idempotent)
+php artisan flag:sync --dry-run       # show the plan, write nothing
+php artisan flag:sync --prune         # also delete DB flags not in the file
+```
+
 All commands go through `FeatureFlagManager` (never Eloquent directly) and exit `1` on
 not-found so scripts can react.
 

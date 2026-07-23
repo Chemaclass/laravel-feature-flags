@@ -114,6 +114,11 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
         return $this->inner->distinctKeys();
     }
 
+    public function allFlags(): array
+    {
+        return $this->inner->allFlags();
+    }
+
     public function findById(string $id): ?FeatureTransfer
     {
         return $this->inner->findById($id);

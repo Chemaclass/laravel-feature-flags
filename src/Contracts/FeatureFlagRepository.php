@@ -51,6 +51,13 @@ interface FeatureFlagRepository
      */
     public function distinctKeys(): array;
 
+    /**
+     * Every stored flag row as a DTO (for sync/export).
+     *
+     * @return list<FeatureTransfer>
+     */
+    public function allFlags(): array;
+
     public function findById(string $id): ?FeatureTransfer;
 
     public function findByKeyAndScope(string $key, ?string $scopeId): ?FeatureTransfer;
