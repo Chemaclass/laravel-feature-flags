@@ -114,6 +114,10 @@
                 <input type="text" name="scope_id" placeholder="—"
                        class="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-mono">
             </label>
+            <label class="text-xs font-medium text-zinc-600 dark:text-zinc-400 col-span-2">Environment <span class="text-zinc-400 font-normal">(empty = all environments)</span>
+                <input type="text" name="environment" placeholder="—"
+                       class="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-mono">
+            </label>
             <label class="text-xs font-medium text-zinc-600 dark:text-zinc-400 col-span-2">Hint
                 <input type="text" name="hint" placeholder="optional description"
                        class="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm">

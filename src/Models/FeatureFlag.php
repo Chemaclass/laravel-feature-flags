@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property ?int $rollout_percentage
  * @property ?array<int, array<string, mixed>> $rules
  * @property ?string $scope_id
+ * @property ?string $environment
  * @property ?string $hint
  * @property bool $is_dev
  * @property ?Carbon $enabled_from
@@ -28,6 +29,7 @@ class FeatureFlag extends Model
     protected $fillable = [
         'key',
         'scope_id',
+        'environment',
         'value',
         'rollout_percentage',
         'rules',

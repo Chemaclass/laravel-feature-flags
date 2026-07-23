@@ -39,6 +39,7 @@ final class FeatureFlagController extends Controller
         $data = $request->validate([
             'key' => ['required', 'string'],
             'scope_id' => ['nullable', 'string'],
+            'environment' => ['nullable', 'string'],
             'value' => ['required', 'boolean'],
             'rollout_percentage' => ['nullable', 'integer', 'between:0,100'],
             'rules' => ['nullable', 'array'],
@@ -49,7 +50,7 @@ final class FeatureFlagController extends Controller
         ]);
 
         $feature = $this->manager->updateOrCreate(
-            ['key' => $data['key'], 'scope_id' => $data['scope_id'] ?? null],
+            ['key' => $data['key'], 'scope_id' => $data['scope_id'] ?? null, 'environment' => $data['environment'] ?? null],
             [
                 'value' => $data['value'],
                 'rollout_percentage' => $data['rollout_percentage'] ?? null,
@@ -74,6 +75,7 @@ final class FeatureFlagController extends Controller
             'value' => ['sometimes', 'boolean'],
             'rollout_percentage' => ['sometimes', 'nullable', 'integer', 'between:0,100'],
             'rules' => ['sometimes', 'nullable', 'array'],
+            'environment' => ['sometimes', 'nullable', 'string'],
             'hint' => ['sometimes', 'nullable', 'string'],
             'is_dev' => ['sometimes', 'boolean'],
             'scope_id' => ['sometimes', 'nullable', 'string'],
