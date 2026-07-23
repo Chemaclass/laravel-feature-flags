@@ -45,4 +45,15 @@ return [
          */
         'evaluation' => env('FEATURE_FLAGS_EVENTS_EVALUATION', false),
     ],
+
+    /*
+     * Optional Laravel Pennant bridge. When enabled (and laravel/pennant is
+     * installed), registers a Pennant driver named below that resolves through
+     * this package. Point pennant.default at it to have Feature::active() read
+     * from here. No effect when Pennant is absent.
+     */
+    'pennant' => [
+        'enabled' => env('FEATURE_FLAGS_PENNANT_ENABLED', false),
+        'driver' => 'feature-flags',
+    ],
 ];
