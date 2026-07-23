@@ -158,6 +158,20 @@ Outside the window, `isEnabled()` returns `false` even if `value = true`.
 
 The admin UI shows a `DEV` pill on rows where `is_dev = true`, and a per-key `DEV` button that flips the marker on every row sharing the key.
 
+## Artisan commands
+
+For CI/CD, seeding and ops scripts:
+
+```bash
+php artisan flag:list --scope=team-1        # table of keys + effective value
+php artisan flag:create new-checkout --value=1 --scope=team-1 --hint="Q3 rollout"
+php artisan flag:toggle new-checkout --scope=team-1
+php artisan flag:delete 01J...              # by row id
+```
+
+All commands go through `FeatureFlagManager` (never Eloquent directly) and exit `1` on
+not-found so scripts can react.
+
 ## Next steps
 
 - [Scope resolvers](scopes.md)
