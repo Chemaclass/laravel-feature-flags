@@ -29,7 +29,55 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
 
     public function isEnabled(string $key, ?string $scopeId = null, array $context = []): bool
     {
-        $row = $this->query()
+        $result = $this->evaluate($key, $scopeId, $context, []);
+
+        if (config('feature-flags.events.evaluation', false)) {
+            $this->events->dispatch(new FlagEvaluated($key, $scopeId, $result));
+        }
+
+        return $result;
+    }
+
+    /**
+     * Evaluate a flag, honouring the kill switch, targeting rules, rollout and
+     * prerequisites. `$chain` tracks the prerequisite path to break cycles.
+     *
+     * @param  array<string, mixed>  $context
+     * @param  list<string>  $chain
+     */
+    private function evaluate(string $key, ?string $scopeId, array $context, array $chain): bool
+    {
+        if ($this->isKilled($key) || in_array($key, $chain, true)) {
+            return false;
+        }
+
+        $row = $this->winningRow($key, $scopeId);
+
+        if (! $this->resolveRow($row, $key, $scopeId, $context)) {
+            return false;
+        }
+
+        $prerequisites = $row->prerequisites ?? [];
+        foreach ($prerequisites as $prerequisite) {
+            if (! $this->evaluate($prerequisite, $scopeId, $context, [...$chain, $key])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isKilled(string $key): bool
+    {
+        /** @var list<string> $killed */
+        $killed = config('feature-flags.kill_switch', []);
+
+        return in_array($key, $killed, true);
+    }
+
+    private function winningRow(string $key, ?string $scopeId): ?FeatureFlag
+    {
+        return $this->query()
             ->where('key', $key)
             ->when(
                 $scopeId,
@@ -43,14 +91,6 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
             ->orderByRaw('scope_id IS NULL ASC')
             ->orderByRaw('environment IS NULL ASC')
             ->first();
-
-        $result = $this->resolveRow($row, $key, $scopeId, $context);
-
-        if (config('feature-flags.events.evaluation', false)) {
-            $this->events->dispatch(new FlagEvaluated($key, $scopeId, $result));
-        }
-
-        return $result;
     }
 
     /**
@@ -130,7 +170,20 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
                 continue;
             }
             $seen[$row->key] = true;
-            $result[$row->key] = $this->resolveRow($row, $row->key, $scopeId, $context);
+
+            if ($this->isKilled($row->key) || ! $this->resolveRow($row, $row->key, $scopeId, $context)) {
+                $result[$row->key] = false;
+
+                continue;
+            }
+
+            $result[$row->key] = true;
+            foreach ($row->prerequisites ?? [] as $prerequisite) {
+                if (! $this->evaluate($prerequisite, $scopeId, $context, [$row->key])) {
+                    $result[$row->key] = false;
+                    break;
+                }
+            }
         }
 
         return $result;

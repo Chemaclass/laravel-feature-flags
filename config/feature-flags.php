@@ -26,6 +26,12 @@ return [
     'middleware_alias' => 'feature.enabled',
 
     /*
+     * Global kill switch. Any key listed here is forced off before any query,
+     * regardless of its stored value — a master off-switch for incidents.
+     */
+    'kill_switch' => array_filter(explode(',', (string) env('FEATURE_FLAGS_KILL_SWITCH', ''))),
+
+    /*
      * Per-environment flags. A row's `environment` column scopes it to one
      * environment; null applies to all. By default the current environment is
      * `app()->environment()`; set `current` to override (e.g. for testing).

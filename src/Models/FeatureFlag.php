@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property bool $value
  * @property ?int $rollout_percentage
  * @property ?array<int, array<string, mixed>> $rules
+ * @property ?array<int, string> $prerequisites
  * @property ?string $scope_id
  * @property ?string $environment
  * @property ?string $hint
@@ -33,6 +34,7 @@ class FeatureFlag extends Model
         'value',
         'rollout_percentage',
         'rules',
+        'prerequisites',
         'hint',
         'is_dev',
         'enabled_from',
@@ -44,6 +46,7 @@ class FeatureFlag extends Model
         'value' => 'boolean',
         'rollout_percentage' => 'integer',
         'rules' => 'array',
+        'prerequisites' => 'array',
         'is_dev' => 'boolean',
         'enabled_from' => 'datetime',
         'enabled_until' => 'datetime',

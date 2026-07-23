@@ -245,6 +245,30 @@ FeatureFlag::isEnabled('new-checkout', $userId); // true for ~30% of $userId val
   at the threshold.
 - A scoped override row wins over the global row and applies **its own** percentage.
 
+## Prerequisites & kill switch
+
+A flag can require other flags to be on. If any prerequisite resolves false, the flag is off —
+even if its own value is true. Cycles resolve to false (no infinite loop):
+
+```php
+FeatureFlag::updateOrCreate(
+    ['key' => 'checkout-v2', 'scope_id' => null],
+    ['value' => true, 'prerequisites' => ['payments-live', 'new-cart']],
+);
+```
+
+A global **kill switch** forces any listed key off before any query — a master off-switch for
+incidents, driven from the environment:
+
+```php
+// config/feature-flags.php
+'kill_switch' => array_filter(explode(',', (string) env('FEATURE_FLAGS_KILL_SWITCH', ''))),
+```
+
+```dotenv
+FEATURE_FLAGS_KILL_SWITCH=checkout-v2,new-billing
+```
+
 ## Dev marker
 
 `is_dev = true` is a hint your app can use to hide a flag from non-engineering users or block production exposure. The package doesn't enforce anything. Your code decides what `is_dev` means.
