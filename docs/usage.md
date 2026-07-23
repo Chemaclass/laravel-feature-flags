@@ -318,6 +318,13 @@ php artisan flag:stale --days=30 --json     # JSON for CI
 `flag:stale` reports flags untouched for N+ days that hold a single constant value across all
 their rows (time-windowed flags are excluded) — your flag-debt cleanup list.
 
+Generate a typed enum from the stored keys for IDE autocomplete and type-safe checks:
+
+```bash
+php artisan flag:generate --class="App\Features\AppFeature"
+# writes app/Features/AppFeature.php implementing FeatureKey (--force to overwrite)
+```
+
 All commands go through `FeatureFlagManager` (never Eloquent directly) and exit `1` on
 not-found so scripts can react.
 
