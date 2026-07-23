@@ -14,27 +14,31 @@ final readonly class FeatureFlagManager
         private FeatureFlagRepository $repository,
     ) {}
 
-    public function isEnabled(FeatureKey|string $flag, ?string $scopeId = null): bool
+    /**
+     * @param  array<string, mixed>  $context  Attributes for targeting rules.
+     */
+    public function isEnabled(FeatureKey|string $flag, ?string $scopeId = null, array $context = []): bool
     {
         $key = $flag instanceof FeatureKey ? $flag->key() : $flag;
 
-        return $this->repository->isEnabled($key, $scopeId);
+        return $this->repository->isEnabled($key, $scopeId, $context);
     }
 
     /**
      * Evaluate many flags at once for the same scope (single query).
      *
      * @param  list<FeatureKey|string>  $flags
+     * @param  array<string, mixed>  $context
      * @return array<string, bool>
      */
-    public function allEnabled(array $flags, ?string $scopeId = null): array
+    public function allEnabled(array $flags, ?string $scopeId = null, array $context = []): array
     {
         $keys = array_map(
             static fn (FeatureKey|string $flag): string => $flag instanceof FeatureKey ? $flag->key() : $flag,
             $flags,
         );
 
-        return $this->repository->allEnabled($keys, $scopeId);
+        return $this->repository->allEnabled($keys, $scopeId, $context);
     }
 
     /**

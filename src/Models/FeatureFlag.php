@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
  * @property string $key
  * @property bool $value
  * @property ?int $rollout_percentage
+ * @property ?array<int, array<string, mixed>> $rules
  * @property ?string $scope_id
  * @property ?string $hint
  * @property bool $is_dev
@@ -29,6 +30,7 @@ class FeatureFlag extends Model
         'scope_id',
         'value',
         'rollout_percentage',
+        'rules',
         'hint',
         'is_dev',
         'enabled_from',
@@ -39,6 +41,7 @@ class FeatureFlag extends Model
     protected $casts = [
         'value' => 'boolean',
         'rollout_percentage' => 'integer',
+        'rules' => 'array',
         'is_dev' => 'boolean',
         'enabled_from' => 'datetime',
         'enabled_until' => 'datetime',

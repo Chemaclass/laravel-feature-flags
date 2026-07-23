@@ -9,6 +9,7 @@ use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
 use Chemaclass\FeatureFlags\Events\FlagEvaluated;
 use Chemaclass\FeatureFlags\Events\FlagToggled;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
+use Chemaclass\FeatureFlags\Targeting\RuleEvaluator;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -19,13 +20,14 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
 
     public function __construct(
         private readonly Dispatcher $events,
+        private readonly RuleEvaluator $rules = new RuleEvaluator,
     ) {
         /** @var class-string<FeatureFlag> $cls */
         $cls = config('feature-flags.model', FeatureFlag::class);
         $this->modelClass = $cls;
     }
 
-    public function isEnabled(string $key, ?string $scopeId = null): bool
+    public function isEnabled(string $key, ?string $scopeId = null, array $context = []): bool
     {
         $row = $this->query()
             ->where('key', $key)
@@ -40,15 +42,36 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
             ->orderByRaw('scope_id IS NULL ASC')
             ->first();
 
-        $result = $row !== null && $row->value
-            ? $this->passesRollout($key, $scopeId, $row->rollout_percentage)
-            : false;
+        $result = $this->resolveRow($row, $key, $scopeId, $context);
 
         if (config('feature-flags.events.evaluation', false)) {
             $this->events->dispatch(new FlagEvaluated($key, $scopeId, $result));
         }
 
         return $result;
+    }
+
+    /**
+     * Resolve a winning row to a boolean: targeting rules first (a matching rule
+     * overrides), then the boolean value gated by percentage rollout.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    private function resolveRow(?FeatureFlag $row, string $key, ?string $scopeId, array $context): bool
+    {
+        if ($row === null) {
+            return false;
+        }
+
+        $rules = $row->rules;
+        if (is_array($rules) && $rules !== []) {
+            $ruled = $this->rules->matches($rules, $context);
+            if ($ruled !== null) {
+                return $ruled;
+            }
+        }
+
+        return $row->value && $this->passesRollout($key, $scopeId, $row->rollout_percentage);
     }
 
     /**
@@ -75,7 +98,7 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
         return $bucket < $percentage;
     }
 
-    public function allEnabled(array $keys, ?string $scopeId = null): array
+    public function allEnabled(array $keys, ?string $scopeId = null, array $context = []): array
     {
         /** @var array<string, bool> $result */
         $result = array_fill_keys($keys, false);
@@ -94,7 +117,7 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
             )
             ->tap(fn (Builder $q) => $this->timeWindowScope($q))
             ->orderByRaw('scope_id IS NULL ASC')
-            ->get(['key', 'value', 'scope_id']);
+            ->get();
 
         // Ordered scope-first: the first row seen per key wins (scope beats global).
         $seen = [];
@@ -103,7 +126,7 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
                 continue;
             }
             $seen[$row->key] = true;
-            $result[$row->key] = (bool) $row->value;
+            $result[$row->key] = $this->resolveRow($row, $row->key, $scopeId, $context);
         }
 
         return $result;

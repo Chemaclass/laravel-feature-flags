@@ -10,8 +10,8 @@ use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static bool isEnabled(FeatureKey|string $flag, ?string $scopeId = null)
- * @method static array<string, bool> allEnabled(array<int, FeatureKey|string> $flags, ?string $scopeId = null)
+ * @method static bool isEnabled(FeatureKey|string $flag, ?string $scopeId = null, array<string, mixed> $context = [])
+ * @method static array<string, bool> allEnabled(array<int, FeatureKey|string> $flags, ?string $scopeId = null, array<string, mixed> $context = [])
  * @method static array<string, bool> all(?string $scopeId)
  * @method static ?FeatureTransfer findById(string $id)
  * @method static ?FeatureTransfer findByKeyAndScope(string $key, ?string $scopeId)
