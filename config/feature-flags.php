@@ -24,4 +24,16 @@ return [
     ],
 
     'middleware_alias' => 'feature.enabled',
+
+    /*
+     * Evaluation cache. Flag checks are always memoized per request. Set a
+     * `store` (any cache store name from config/cache.php) to also cache
+     * evaluations across requests; writes bump a namespace version so a single
+     * change invalidates every cached evaluation. `null` = memoization only.
+     */
+    'cache' => [
+        'store' => env('FEATURE_FLAGS_CACHE_STORE'),
+        'ttl' => 60,
+        'prefix' => 'feature-flags',
+    ],
 ];

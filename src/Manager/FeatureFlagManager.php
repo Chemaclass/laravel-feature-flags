@@ -22,6 +22,22 @@ final readonly class FeatureFlagManager
     }
 
     /**
+     * Evaluate many flags at once for the same scope (single query).
+     *
+     * @param  list<FeatureKey|string>  $flags
+     * @return array<string, bool>
+     */
+    public function allEnabled(array $flags, ?string $scopeId = null): array
+    {
+        $keys = array_map(
+            static fn (FeatureKey|string $flag): string => $flag instanceof FeatureKey ? $flag->key() : $flag,
+            $flags,
+        );
+
+        return $this->repository->allEnabled($keys, $scopeId);
+    }
+
+    /**
      * @return array<string, bool>
      */
     public function all(?string $scopeId): array

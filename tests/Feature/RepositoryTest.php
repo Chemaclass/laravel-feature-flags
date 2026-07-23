@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
+use Chemaclass\FeatureFlags\Repository\EloquentFeatureFlagRepository;
 use Illuminate\Support\Carbon;
 
+// Targets the SQL/repository layer directly (scope precedence, time windows).
+// The caching decorator is covered separately in CacheTest.
 beforeEach(function (): void {
-    $this->repo = app(FeatureFlagRepository::class);
+    $this->repo = app(EloquentFeatureFlagRepository::class);
 });
 
 it('isEnabled returns false when no row exists', function (): void {

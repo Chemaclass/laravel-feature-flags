@@ -59,6 +59,23 @@ Name prefix for admin routes. Default `feature-flags.`. Used by `route('feature-
 ### `middleware_alias`
 Short alias for `EnsureFeatureIsActive`. Default `feature.enabled`. Use as `->middleware('feature.enabled:my-key')`.
 
+### `cache`
+Evaluation cache. Every flag check is **memoized per request** regardless of this setting, so
+repeated checks in one request never re-query.
+
+```php
+'cache' => [
+    'store' => env('FEATURE_FLAGS_CACHE_STORE'), // null = memoization only
+    'ttl' => 60,                                 // seconds
+    'prefix' => 'feature-flags',
+],
+```
+
+Set `store` to any cache store name from `config/cache.php` (`redis`, `file`, …) to also cache
+evaluations **across requests**. Writes bump a namespace version, so a single flag change
+invalidates every cached evaluation instantly — no per-key enumeration, works on any driver.
+Leave `store` as `null` to keep memoization-only behavior (no cross-request cache).
+
 ## Env-driven config
 
 Wire to `.env` if you want per-environment toggles:

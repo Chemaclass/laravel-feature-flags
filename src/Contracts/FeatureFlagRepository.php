@@ -11,6 +11,14 @@ interface FeatureFlagRepository
     public function isEnabled(string $key, ?string $scopeId = null): bool;
 
     /**
+     * Evaluate many keys at once for the same scope.
+     *
+     * @param  list<string>  $keys
+     * @return array<string, bool>
+     */
+    public function allEnabled(array $keys, ?string $scopeId = null): array;
+
+    /**
      * @return array<string, bool>
      */
     public function listForScope(?string $scopeId): array;
