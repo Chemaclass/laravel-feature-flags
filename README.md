@@ -115,6 +115,10 @@ See [docs/admin-ui.md](docs/admin-ui.md).
 - PHP `^8.3`
 - Laravel `^11.0 || ^12.0`
 
+This package pulls in `illuminate/*` at those constraints and nothing more. Any security
+advisories reported by `composer audit` come transitively from the Laravel framework your
+app already ships — keep your Laravel install on its latest patch release to pick up fixes.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for local dev setup, the Docker demo app, the test suites, formatting, and the `release.sh` flow.
