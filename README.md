@@ -5,6 +5,7 @@
 [![Packagist Downloads](https://img.shields.io/packagist/dt/chemaclass/laravel-feature-flags.svg)](https://packagist.org/packages/chemaclass/laravel-feature-flags)
 [![PHP](https://img.shields.io/badge/PHP-%5E8.3-777BB4?logo=php&logoColor=white)](composer.json)
 [![Laravel](https://img.shields.io/badge/Laravel-11.x%20%7C%2012.x-FF2D20?logo=laravel&logoColor=white)](composer.json)
+[![Live demo](https://img.shields.io/badge/live-demo-6366f1?logo=readme&logoColor=white)](https://chemaclass.github.io/laravel-feature-flags/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A full feature-flag toolkit for Laravel that needs **nothing but your database**. Simple
@@ -12,6 +13,8 @@ on/off toggles when that's all you want — attribute targeting, percentage roll
 variants, per-environment values, and a Blade admin UI when you need more.
 
 > Drop it in any Laravel app. No external service, no vendor lock-in, no infra to run.
+
+**▶ [Live demo & feature tour](https://chemaclass.github.io/laravel-feature-flags/)** — how it works, the admin UI, and every feature at a glance.
 
 ```php
 if (FeatureFlag::isEnabled('new-dashboard')) {
