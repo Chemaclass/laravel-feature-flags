@@ -71,6 +71,18 @@ return [
         'actor' => null,
     ],
 
+    /*
+     * Real-time cache invalidation. When enabled, every flag write broadcasts a
+     * FlagsChanged event; a listener bumps the cache namespace version on each
+     * node so a change propagates instantly instead of waiting for the TTL.
+     * Only useful with a cache store configured above.
+     */
+    'realtime' => [
+        'enabled' => env('FEATURE_FLAGS_REALTIME_ENABLED', false),
+        'connection' => env('FEATURE_FLAGS_REALTIME_CONNECTION'),
+        'channel' => 'feature-flags',
+    ],
+
     'events' => [
         /*
          * Dispatch a FlagEvaluated event on every flag check. Off by default to

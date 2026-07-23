@@ -15,8 +15,10 @@ use Chemaclass\FeatureFlags\Console\ToggleFlagCommand;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\Contracts\FeatureKey;
 use Chemaclass\FeatureFlags\Contracts\FeatureScopeResolver;
+use Chemaclass\FeatureFlags\Events\FlagsChanged;
 use Chemaclass\FeatureFlags\Events\FlagToggled;
 use Chemaclass\FeatureFlags\Http\Middleware\EnsureFeatureIsActive;
+use Chemaclass\FeatureFlags\Listeners\InvalidateFlagCache;
 use Chemaclass\FeatureFlags\Listeners\RecordFlagChange;
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 use Chemaclass\FeatureFlags\Pennant\FeatureFlagsPennantDriver;
@@ -88,6 +90,10 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
 
         if ((bool) config('feature-flags.audit.enabled', false)) {
             Event::listen(FlagToggled::class, RecordFlagChange::class);
+        }
+
+        if ((bool) config('feature-flags.realtime.enabled', false)) {
+            Event::listen(FlagsChanged::class, InvalidateFlagCache::class);
         }
 
         $this->publishes([
