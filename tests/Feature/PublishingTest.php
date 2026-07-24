@@ -28,10 +28,17 @@ it('publishes routes under feature-flags-routes tag', function (): void {
     expect($paths)->not->toBeEmpty();
 });
 
+it('publishes the JS client under feature-flags-js tag', function (): void {
+    $paths = FeatureFlagsServiceProvider::pathsToPublish(FeatureFlagsServiceProvider::class, 'feature-flags-js');
+
+    expect($paths)->not->toBeEmpty();
+});
+
 it('publishes everything under feature-flags tag (all-in-one)', function (): void {
     $paths = FeatureFlagsServiceProvider::pathsToPublish(FeatureFlagsServiceProvider::class, 'feature-flags');
 
-    expect($paths)->toHaveCount(4);
+    // config, migrations, views, admin routes, JS client
+    expect($paths)->toHaveCount(5);
 });
 
 it('registers the feature.enabled middleware alias', function (): void {

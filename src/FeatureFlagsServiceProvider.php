@@ -74,6 +74,10 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
         }
 
+        if ((bool) config('feature-flags.api.enabled', false)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
+        }
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ListFlagsCommand::class,
@@ -113,10 +117,15 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
         ], 'feature-flags-routes');
 
         $this->publishes([
+            __DIR__.'/../resources/js/feature-flags.js' => resource_path('js/vendor/feature-flags.js'),
+        ], 'feature-flags-js');
+
+        $this->publishes([
             __DIR__.'/../config/feature-flags.php' => config_path('feature-flags.php'),
             __DIR__.'/../database/migrations' => database_path('migrations'),
             __DIR__.'/../resources/views' => resource_path('views/vendor/feature-flags'),
             __DIR__.'/../routes/admin.php' => base_path('routes/feature-flags.php'),
+            __DIR__.'/../resources/js/feature-flags.js' => resource_path('js/vendor/feature-flags.js'),
         ], 'feature-flags');
     }
 

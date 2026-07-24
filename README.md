@@ -166,6 +166,23 @@ FeatureFlag::allEnabled(['new-dashboard', 'beta-search'], $userId);
 </details>
 
 <details>
+<summary><b>JSON API + JS client</b> (frontends & other services)</summary>
+
+Enable the API (`feature-flags.api.enabled`), then evaluate flags over HTTP — targeting rules,
+rollout and variants all apply:
+
+```js
+import { createFeatureFlags } from './vendor/feature-flags.js'; // php artisan vendor:publish --tag=feature-flags-js
+
+const ff = createFeatureFlags({ endpoint: '/feature-flags/api/evaluate', scope: user.id, context: { plan: user.plan } });
+await ff.load();
+ff.isEnabled('new-dashboard'); // bool
+ff.variant('homepage');        // { name, payload } | null
+```
+→ [api](docs/api.md)
+</details>
+
+<details>
 <summary><b>Artisan & GitOps</b></summary>
 
 ```bash
@@ -192,7 +209,8 @@ Everything runs on your existing database — no service to run, no vendor lock-
   time windows, prerequisites, and a global kill-switch.
 - **Experiments & config** — weighted multivariate variants with per-variant payloads.
 - **Environments** — the same key resolving differently per environment.
-- **Delivery** — facade, `@feature` Blade directives, route middleware, and Artisan commands.
+- **Delivery** — facade, `@feature` Blade directives, route middleware, Artisan commands, and a
+  JSON HTTP API with a zero-dependency JS client for frontends and other services.
 - **Operations** — request + cross-request caching with real-time invalidation, lifecycle
   events, an opt-in audit log with admin history, stale-flag detection, typed enum codegen,
   and config-as-code sync.
@@ -215,6 +233,7 @@ through this package, so you can adopt it without rewriting call sites.
 | Defining, checking, targeting & variants | [usage.md](docs/usage.md) |
 | Scope resolvers | [scopes.md](docs/scopes.md) |
 | Middleware guard | [middleware.md](docs/middleware.md) |
+| HTTP API & JS client | [api.md](docs/api.md) |
 | Admin UI | [admin-ui.md](docs/admin-ui.md) |
 | Custom repository, audit log, storage | [extending.md](docs/extending.md) |
 | Laravel Pennant bridge | [pennant.md](docs/pennant.md) |

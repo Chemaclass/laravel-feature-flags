@@ -26,6 +26,18 @@ return [
     'middleware_alias' => 'feature.enabled',
 
     /*
+     * JSON HTTP API for frontends and other services. Off by default — enabling
+     * it exposes flag evaluations over HTTP, so choose middleware to match how
+     * public the data is (auth, throttle, signed, a token guard, …). The bundled
+     * JS client (feature-flags-js publish tag) talks to `POST {prefix}/evaluate`.
+     */
+    'api' => [
+        'enabled' => env('FEATURE_FLAGS_API_ENABLED', false),
+        'prefix' => 'feature-flags/api',
+        'middleware' => ['api'],
+    ],
+
+    /*
      * Config-as-code. `flag:sync` reconciles the definitions file below into the
      * database (upsert; --prune removes flags not in the file).
      */

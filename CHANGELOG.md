@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- **JSON HTTP API** — opt-in `GET|POST {prefix}/evaluate` endpoint that evaluates flags (with
+  scope, context, variants) through the manager, so frontends and other services can read flags.
+  Configurable prefix + middleware; off by default.
+- **JavaScript client** — a zero-dependency browser client (`feature-flags-js` publish tag)
+  wrapping the API: `createFeatureFlags().load()` / `.isEnabled()` / `.variant()`.
+
 ## [1.0.0] - 2026-07-24
 
 ### Added

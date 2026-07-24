@@ -30,6 +30,7 @@ php artisan vendor:publish --tag=feature-flags-config       # config/feature-fla
 php artisan vendor:publish --tag=feature-flags-migrations   # DB migration
 php artisan vendor:publish --tag=feature-flags-views        # Blade admin view (optional)
 php artisan vendor:publish --tag=feature-flags-routes       # Admin routes (optional)
+php artisan vendor:publish --tag=feature-flags-js           # JS API client (optional)
 php artisan migrate
 ```
 
