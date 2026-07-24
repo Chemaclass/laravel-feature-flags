@@ -184,6 +184,33 @@ php artisan flag:sync --prune            # reconcile from a versioned file (conf
 Visit `/admin/feature-flags` (configurable, gated by `web`+`auth` by default): flags grouped
 by key, sliding toggles, inline editing, scope overrides, dark mode. → [admin-ui](docs/admin-ui.md)
 
+## How it compares
+
+For a **self-hosted Laravel app**, this gives you the capabilities teams usually reach for a
+hosted service to get — with no service to run.
+
+| Capability | This | [Pennant](https://laravel.com/docs/pennant) | Unleash | Flagsmith |
+|---|:---:|:---:|:---:|:---:|
+| Zero infra (just your DB) | ✅ | ✅ | ❌ | ❌ |
+| Boolean + per-scope | ✅ | ✅ | ✅ | ✅ |
+| Attribute targeting rules | ✅ | ❌ | ✅ | ✅ |
+| Percentage rollout | ✅ | partial | ✅ | ✅ |
+| Multivariate variants | ✅ | ✅ | ✅ | ✅ |
+| Environments | ✅ | ❌ | ✅ | ✅ |
+| Prerequisites + kill-switch | ✅ | ❌ | partial | partial |
+| Audit log | ✅ | ❌ | ✅ | ✅ |
+| Real-time invalidation | ✅ | ❌ | ✅ | ✅ |
+| Config-as-code / GitOps | ✅ | ❌ | partial | ❌ |
+| Stale-flag detection | ✅ | ❌ | ❌ | ❌ |
+| Typed enum codegen | ✅ | ❌ | ❌ | ❌ |
+| Blade + middleware + Artisan | ✅ | partial | ❌ | ❌ |
+
+Not trying to be a polyglot SaaS with an experimentation stats engine and multi-language SDKs —
+if you need that, use a hosted platform. For a Laravel monolith, this covers the ground.
+
+Already on Pennant? The optional [bridge](docs/pennant.md) lets `Feature::active()` resolve
+through this package, so you can adopt it without rewriting call sites.
+
 ## Documentation
 
 | Topic | Link |
@@ -199,6 +226,11 @@ by key, sliding toggles, inline editing, scope overrides, dark mode. → [admin-
 | Testing | [testing.md](docs/testing.md) |
 | Recipes & patterns | [recipes.md](docs/recipes.md) |
 | Architecture overview | [architecture.md](docs/architecture.md) |
+
+## Stability
+
+`1.0` and stable — semver from here on, **100% test coverage** enforced in CI. Pin with
+`composer require chemaclass/laravel-feature-flags:^1.0`.
 
 ## Requirements
 
