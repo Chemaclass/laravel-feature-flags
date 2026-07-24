@@ -10,6 +10,7 @@ use Chemaclass\FeatureFlags\DTO\VariantResult;
 use Chemaclass\FeatureFlags\Events\FlagEvaluated;
 use Chemaclass\FeatureFlags\Events\FlagToggled;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
+use Chemaclass\FeatureFlags\Targeting\RampCalculator;
 use Chemaclass\FeatureFlags\Targeting\RuleEvaluator;
 use Chemaclass\FeatureFlags\Targeting\SegmentRepository;
 use Chemaclass\FeatureFlags\Variants\VariantSelector;
@@ -26,6 +27,7 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
         private readonly RuleEvaluator $rules = new RuleEvaluator,
         private readonly VariantSelector $variants = new VariantSelector,
         private readonly SegmentRepository $segments = new SegmentRepository,
+        private readonly RampCalculator $ramps = new RampCalculator,
     ) {
         /** @var class-string<FeatureFlag> $cls */
         $cls = config('feature-flags.model', FeatureFlag::class);
@@ -118,7 +120,24 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
             }
         }
 
-        return $row->value && $this->passesRollout($key, $scopeId, $row->rollout_percentage);
+        return $row->value && $this->passesRollout($key, $scopeId, $this->effectivePercentage($row));
+    }
+
+    /**
+     * The rollout percentage in effect right now: a scheduled ramp (if valid)
+     * overrides the stored `rollout_percentage`.
+     */
+    private function effectivePercentage(FeatureFlag $row): ?int
+    {
+        $ramp = $row->ramp;
+        if (is_array($ramp) && $ramp !== []) {
+            $ramped = $this->ramps->effectivePercentage($ramp, now());
+            if ($ramped !== null) {
+                return $ramped;
+            }
+        }
+
+        return $row->rollout_percentage;
     }
 
     /**

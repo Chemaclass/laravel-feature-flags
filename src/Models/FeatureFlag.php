@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
  * @property string $key
  * @property bool $value
  * @property ?int $rollout_percentage
+ * @property ?array<string, mixed> $ramp
  * @property ?array<int, array<string, mixed>> $rules
  * @property ?array<int, string> $prerequisites
  * @property ?array<int, array{name: string, weight: int|float}> $variants
@@ -35,6 +36,7 @@ class FeatureFlag extends Model
         'environment',
         'value',
         'rollout_percentage',
+        'ramp',
         'rules',
         'prerequisites',
         'variants',
@@ -49,6 +51,7 @@ class FeatureFlag extends Model
     protected $casts = [
         'value' => 'boolean',
         'rollout_percentage' => 'integer',
+        'ramp' => 'array',
         'rules' => 'array',
         'prerequisites' => 'array',
         'variants' => 'array',

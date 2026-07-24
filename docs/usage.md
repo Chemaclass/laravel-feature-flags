@@ -293,6 +293,28 @@ FeatureFlag::isEnabled('new-checkout', $userId); // true for ~30% of $userId val
   at the threshold.
 - A scoped override row wins over the global row and applies **its own** percentage.
 
+### Scheduled ramps
+
+Instead of a fixed percentage, schedule an automatic ramp — the effective rollout is
+interpolated between `from` and `to` over the window, so a flag ramps itself up (or down)
+without a cron job:
+
+```php
+FeatureFlag::updateOrCreate(['key' => 'new-checkout', 'scope_id' => null], [
+    'value' => true,
+    'ramp' => [
+        'from' => 0, 'to' => 100,
+        'starts_at' => '2026-08-01 00:00:00',
+        'ends_at'   => '2026-08-08 00:00:00', // 0% → 100% over a week
+    ],
+]);
+```
+
+- Before the window it's `from`; after, `to`; in between, linearly interpolated.
+- Bucketing is the same deterministic hash, so as the percentage grows a scope that's already
+  in **stays** in — the ramp only adds users (with `to > from`).
+- A ramp overrides `rollout_percentage`; an invalid/incomplete ramp falls back to it.
+
 ## Prerequisites & kill switch
 
 A flag can require other flags to be on. If any prerequisite resolves false, the flag is off —

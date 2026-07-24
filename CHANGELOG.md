@@ -16,6 +16,8 @@
 - **Reusable segments** — named, shareable condition sets (`feature_flag_segments` table) that
   flag rules reference with `['segment' => 'name']`; managed via `defineSegment` / `deleteSegment`
   / `segments`. Updating a segment busts cached evaluations of every flag using it.
+- **Scheduled ramps** — a flag's `ramp` (`from`, `to`, `starts_at`, `ends_at`) interpolates the
+  effective rollout percentage over time, so rollouts ramp themselves up without a cron job.
 
 ## [1.0.0] - 2026-07-24
 

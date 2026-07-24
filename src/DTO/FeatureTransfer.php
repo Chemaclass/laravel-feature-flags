@@ -12,6 +12,7 @@ final readonly class FeatureTransfer
     /**
      * @param  array<int, array<string, mixed>>|null  $rules
      * @param  array<int, string>|null  $prerequisites
+     * @param  array<string, mixed>|null  $ramp
      */
     public function __construct(
         public string $id,
@@ -26,6 +27,7 @@ final readonly class FeatureTransfer
         public ?int $rolloutPercentage = null,
         public ?array $rules = null,
         public ?array $prerequisites = null,
+        public ?array $ramp = null,
     ) {}
 
     public static function fromModel(FeatureFlag $model): self
@@ -43,6 +45,7 @@ final readonly class FeatureTransfer
             rolloutPercentage: $model->rollout_percentage,
             rules: $model->rules,
             prerequisites: $model->prerequisites,
+            ramp: $model->ramp,
         );
     }
 }

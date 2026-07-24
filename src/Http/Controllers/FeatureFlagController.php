@@ -54,6 +54,7 @@ final class FeatureFlagController extends Controller
             'environment' => ['nullable', 'string'],
             'value' => ['required', 'boolean'],
             'rollout_percentage' => ['nullable', 'integer', 'between:0,100'],
+            'ramp' => ['nullable', 'array'],
             'rules' => ['nullable', 'array'],
             'prerequisites' => ['nullable', 'array'],
             'variants' => ['nullable', 'array'],
@@ -69,6 +70,7 @@ final class FeatureFlagController extends Controller
             [
                 'value' => $data['value'],
                 'rollout_percentage' => $data['rollout_percentage'] ?? null,
+                'ramp' => $data['ramp'] ?? null,
                 'rules' => $data['rules'] ?? null,
                 'prerequisites' => $data['prerequisites'] ?? null,
                 'variants' => $data['variants'] ?? null,
@@ -92,6 +94,7 @@ final class FeatureFlagController extends Controller
         $data = $request->validate([
             'value' => ['sometimes', 'boolean'],
             'rollout_percentage' => ['sometimes', 'nullable', 'integer', 'between:0,100'],
+            'ramp' => ['sometimes', 'nullable', 'array'],
             'rules' => ['sometimes', 'nullable', 'array'],
             'prerequisites' => ['sometimes', 'nullable', 'array'],
             'variants' => ['sometimes', 'nullable', 'array'],
