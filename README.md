@@ -184,29 +184,24 @@ php artisan flag:sync --prune            # reconcile from a versioned file (conf
 Visit `/admin/feature-flags` (configurable, gated by `web`+`auth` by default): flags grouped
 by key, sliding toggles, inline editing, scope overrides, dark mode. → [admin-ui](docs/admin-ui.md)
 
-## How it compares
+## What you get
 
-For a **self-hosted Laravel app**, this gives you the capabilities teams usually reach for a
-hosted service to get — with no service to run.
+Everything runs on your existing database — no service to run, no vendor lock-in. In one package:
 
-| Capability | This | [Pennant](https://laravel.com/docs/pennant) | Unleash | Flagsmith |
-|---|:---:|:---:|:---:|:---:|
-| Zero infra (just your DB) | ✅ | ✅ | ❌ | ❌ |
-| Boolean + per-scope | ✅ | ✅ | ✅ | ✅ |
-| Attribute targeting rules | ✅ | ❌ | ✅ | ✅ |
-| Percentage rollout | ✅ | partial | ✅ | ✅ |
-| Multivariate variants | ✅ | ✅ | ✅ | ✅ |
-| Environments | ✅ | ❌ | ✅ | ✅ |
-| Prerequisites + kill-switch | ✅ | ❌ | partial | partial |
-| Audit log | ✅ | ❌ | ✅ | ✅ |
-| Real-time invalidation | ✅ | ❌ | ✅ | ✅ |
-| Config-as-code / GitOps | ✅ | ❌ | partial | ❌ |
-| Stale-flag detection | ✅ | ❌ | ❌ | ❌ |
-| Typed enum codegen | ✅ | ❌ | ❌ | ❌ |
-| Blade + middleware + Artisan | ✅ | partial | ❌ | ❌ |
+- **Evaluation** — boolean, per-scope overrides, attribute targeting rules, percentage rollout,
+  time windows, prerequisites, and a global kill-switch.
+- **Experiments & config** — weighted multivariate variants with per-variant payloads.
+- **Environments** — the same key resolving differently per environment.
+- **Delivery** — facade, `@feature` Blade directives, route middleware, and Artisan commands.
+- **Operations** — request + cross-request caching with real-time invalidation, lifecycle
+  events, an opt-in audit log with admin history, stale-flag detection, typed enum codegen,
+  and config-as-code sync.
+- **Admin UI** — a published Blade page, no build step.
 
-Not trying to be a polyglot SaaS with an experimentation stats engine and multi-language SDKs —
-if you need that, use a hosted platform. For a Laravel monolith, this covers the ground.
+It's a self-hosted toolkit for a Laravel app — not a polyglot SaaS with an experimentation
+stats engine and multi-language SDKs. If you need that, use a hosted platform. Evaluating
+alternatives ([Pennant](https://laravel.com/docs/pennant), Unleash, Flagsmith, LaunchDarkly)?
+Check their current docs — capabilities and pricing tiers change.
 
 Already on Pennant? The optional [bridge](docs/pennant.md) lets `Feature::active()` resolve
 through this package, so you can adopt it without rewriting call sites.
