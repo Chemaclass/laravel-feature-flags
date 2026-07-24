@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Chemaclass\FeatureFlags\Manager;
 
+use Chemaclass\FeatureFlags\Analytics\ExposureRecorder;
 use Chemaclass\FeatureFlags\Contracts\FeatureFlagRepository;
 use Chemaclass\FeatureFlags\Contracts\FeatureKey;
+use Chemaclass\FeatureFlags\DTO\ExposureStats;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
 use Chemaclass\FeatureFlags\DTO\VariantResult;
 
@@ -13,6 +15,7 @@ final readonly class FeatureFlagManager
 {
     public function __construct(
         private FeatureFlagRepository $repository,
+        private ExposureRecorder $exposures = new ExposureRecorder,
     ) {}
 
     /**
@@ -22,7 +25,10 @@ final readonly class FeatureFlagManager
     {
         $key = $flag instanceof FeatureKey ? $flag->key() : $flag;
 
-        return $this->repository->isEnabled($key, $scopeId, $context);
+        $result = $this->repository->isEnabled($key, $scopeId, $context);
+        $this->exposures->recordEvaluation($key, $result);
+
+        return $result;
     }
 
     /**
@@ -39,7 +45,12 @@ final readonly class FeatureFlagManager
             $flags,
         );
 
-        return $this->repository->allEnabled($keys, $scopeId, $context);
+        $results = $this->repository->allEnabled($keys, $scopeId, $context);
+        foreach ($results as $key => $result) {
+            $this->exposures->recordEvaluation($key, $result);
+        }
+
+        return $results;
     }
 
     /**
@@ -52,7 +63,12 @@ final readonly class FeatureFlagManager
     {
         $key = $flag instanceof FeatureKey ? $flag->key() : $flag;
 
-        return $this->repository->variant($key, $scopeId, $context);
+        $variant = $this->repository->variant($key, $scopeId, $context);
+        if ($variant !== null) {
+            $this->exposures->recordVariant($key, $variant->name);
+        }
+
+        return $variant;
     }
 
     /**
@@ -61,6 +77,16 @@ final readonly class FeatureFlagManager
     public function all(?string $scopeId): array
     {
         return $this->repository->listForScope($scopeId);
+    }
+
+    /**
+     * Aggregate exposure counts per flag (requires analytics enabled).
+     *
+     * @return list<ExposureStats>
+     */
+    public function exposureStats(): array
+    {
+        return $this->exposures->stats();
     }
 
     /**

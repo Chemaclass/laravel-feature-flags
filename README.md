@@ -192,6 +192,7 @@ php artisan flag:toggle new-dashboard
 php artisan flag:stale --days=30         # flags safe to delete
 php artisan flag:generate                # typed enum from your keys
 php artisan flag:sync --prune            # reconcile from a versioned file (config-as-code)
+php artisan flag:stats                   # exposure counts per flag/variant (analytics)
 ```
 → [usage](docs/usage.md)
 </details>
@@ -212,8 +213,8 @@ Everything runs on your existing database — no service to run, no vendor lock-
 - **Delivery** — facade, `@feature` Blade directives, route middleware, Artisan commands, and a
   JSON HTTP API with a zero-dependency JS client for frontends and other services.
 - **Operations** — request + cross-request caching with real-time invalidation, lifecycle
-  events, an opt-in audit log with admin history, stale-flag detection, typed enum codegen,
-  and config-as-code sync.
+  events, an opt-in audit log with admin history, exposure analytics, stale-flag detection,
+  typed enum codegen, and config-as-code sync.
 - **Admin UI** — a published Blade page, no build step.
 
 It's a self-hosted toolkit for a Laravel app — not a polyglot SaaS with an experimentation
@@ -234,6 +235,7 @@ through this package, so you can adopt it without rewriting call sites.
 | Scope resolvers | [scopes.md](docs/scopes.md) |
 | Middleware guard | [middleware.md](docs/middleware.md) |
 | HTTP API & JS client | [api.md](docs/api.md) |
+| Exposure analytics | [analytics.md](docs/analytics.md) |
 | Admin UI | [admin-ui.md](docs/admin-ui.md) |
 | Custom repository, audit log, storage | [extending.md](docs/extending.md) |
 | Laravel Pennant bridge | [pennant.md](docs/pennant.md) |

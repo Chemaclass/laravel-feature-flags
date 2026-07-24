@@ -11,6 +11,8 @@
   Configurable prefix + middleware; off by default.
 - **JavaScript client** — a zero-dependency browser client (`feature-flags-js` publish tag)
   wrapping the API: `createFeatureFlags().load()` / `.isEnabled()` / `.variant()`.
+- **Exposure analytics** — opt-in aggregate counters of evaluations and variant exposures
+  (`feature_flag_exposures` table), read via `flag:stats` or `FeatureFlagManager::exposureStats()`.
 
 ## [1.0.0] - 2026-07-24
 

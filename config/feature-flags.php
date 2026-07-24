@@ -95,6 +95,18 @@ return [
         'channel' => 'feature-flags',
     ],
 
+    /*
+     * Exposure analytics. When enabled, each evaluation increments an aggregate
+     * counter (per key / variant / result) so you can see how often flags are hit
+     * and how variants split — read them with `flag:stats`. Off by default; every
+     * recorded exposure is a small DB write, so consider a queue or sampling for
+     * very high traffic.
+     */
+    'analytics' => [
+        'enabled' => env('FEATURE_FLAGS_ANALYTICS_ENABLED', false),
+        'table' => 'feature_flag_exposures',
+    ],
+
     'events' => [
         /*
          * Dispatch a FlagEvaluated event on every flag check. Off by default to
