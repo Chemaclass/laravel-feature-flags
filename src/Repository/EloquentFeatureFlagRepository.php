@@ -11,6 +11,7 @@ use Chemaclass\FeatureFlags\Events\FlagEvaluated;
 use Chemaclass\FeatureFlags\Events\FlagToggled;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
 use Chemaclass\FeatureFlags\Targeting\RuleEvaluator;
+use Chemaclass\FeatureFlags\Targeting\SegmentRepository;
 use Chemaclass\FeatureFlags\Variants\VariantSelector;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,6 +25,7 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
         private readonly Dispatcher $events,
         private readonly RuleEvaluator $rules = new RuleEvaluator,
         private readonly VariantSelector $variants = new VariantSelector,
+        private readonly SegmentRepository $segments = new SegmentRepository,
     ) {
         /** @var class-string<FeatureFlag> $cls */
         $cls = config('feature-flags.model', FeatureFlag::class);
@@ -110,7 +112,7 @@ final class EloquentFeatureFlagRepository implements FeatureFlagRepository
 
         $rules = $row->rules;
         if (is_array($rules) && $rules !== []) {
-            $ruled = $this->rules->matches($rules, $context);
+            $ruled = $this->rules->matches($rules, $context, $this->segments->all());
             if ($ruled !== null) {
                 return $ruled;
             }

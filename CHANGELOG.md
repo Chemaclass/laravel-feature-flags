@@ -13,6 +13,9 @@
   wrapping the API: `createFeatureFlags().load()` / `.isEnabled()` / `.variant()`.
 - **Exposure analytics** — opt-in aggregate counters of evaluations and variant exposures
   (`feature_flag_exposures` table), read via `flag:stats` or `FeatureFlagManager::exposureStats()`.
+- **Reusable segments** — named, shareable condition sets (`feature_flag_segments` table) that
+  flag rules reference with `['segment' => 'name']`; managed via `defineSegment` / `deleteSegment`
+  / `segments`. Updating a segment busts cached evaluations of every flag using it.
 
 ## [1.0.0] - 2026-07-24
 

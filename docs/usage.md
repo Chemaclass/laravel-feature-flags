@@ -223,6 +223,27 @@ FeatureFlag::isEnabled('new-billing', $userId, ['plan' => 'pro', 'country' => 'U
 - No matching rule → falls back to the boolean `value` + rollout.
 - The context is part of the cache key, so different contexts never collide.
 
+### Reusable segments
+
+Define a set of conditions once and reference it from many flags with `['segment' => 'name']`
+instead of repeating them. Updating the segment updates every flag that uses it (and busts the
+evaluation cache):
+
+```php
+FeatureFlag::defineSegment('eu-pro', [
+    ['attr' => 'plan', 'op' => 'eq', 'value' => 'pro'],
+    ['attr' => 'country', 'op' => 'in', 'value' => ['DE', 'AT']],
+]);
+
+FeatureFlag::updateOrCreate(['key' => 'new-billing', 'scope_id' => null], [
+    'value' => false,
+    'rules' => [['when' => [['segment' => 'eu-pro']], 'then' => true]],
+]);
+```
+
+A segment reference matches when **all** of its conditions match; mix it with attribute
+conditions in the same `when`. An unknown segment never matches.
+
 ## Variants (A/B/n + payloads)
 
 A flag can carry weighted variants and per-variant payloads. `variant()` returns the

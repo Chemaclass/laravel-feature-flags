@@ -184,6 +184,15 @@ final class CachingFeatureFlagRepository implements FeatureFlagRepository
         return $result;
     }
 
+    /**
+     * Drop all cached evaluations. Used when something other than a flag write
+     * (e.g. a segment change) affects results.
+     */
+    public function invalidate(): void
+    {
+        $this->flush();
+    }
+
     private function flush(): void
     {
         $this->enabledMemo = [];

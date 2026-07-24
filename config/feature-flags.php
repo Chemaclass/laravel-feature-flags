@@ -107,6 +107,14 @@ return [
         'table' => 'feature_flag_exposures',
     ],
 
+    /*
+     * Reusable targeting segments — a named set of conditions a flag rule can
+     * reference with `['segment' => 'name']` instead of repeating the conditions.
+     */
+    'segments' => [
+        'table' => 'feature_flag_segments',
+    ],
+
     'events' => [
         /*
          * Dispatch a FlagEvaluated event on every flag check. Off by default to

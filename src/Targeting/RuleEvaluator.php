@@ -9,23 +9,26 @@ namespace Chemaclass\FeatureFlags\Targeting;
  *
  * A rule set is an ordered list; the first rule whose conditions all match wins
  * and yields its `then` boolean. All conditions inside a rule AND together;
- * rules OR (first match wins). A missing context attribute makes its condition
- * false, never throws. Returns null when no rule matches, so the caller falls
- * back to the flag's boolean value.
+ * rules OR (first match wins). A condition is either an attribute check
+ * (`{attr, op, value}`) or a reference to a reusable segment (`{segment: name}`),
+ * which matches when all of that segment's conditions match. A missing context
+ * attribute or unknown segment makes its condition false, never throws. Returns
+ * null when no rule matches, so the caller falls back to the flag's value.
  */
 final class RuleEvaluator
 {
     /**
-     * @param  array<int, array{when?: array<int, array{attr?: string, op?: string, value?: mixed}>, then?: bool}>  $rules
+     * @param  array<int, array{when?: array<int, array<string, mixed>>, then?: bool}>  $rules
      * @param  array<string, mixed>  $context
+     * @param  array<string, list<array<string, mixed>>>  $segments  name => conditions
      */
-    public function matches(array $rules, array $context): ?bool
+    public function matches(array $rules, array $context, array $segments = []): ?bool
     {
         foreach ($rules as $rule) {
             $conditions = $rule['when'] ?? [];
             $allMatch = true;
             foreach ($conditions as $condition) {
-                if (! $this->conditionMatches($condition, $context)) {
+                if (! $this->conditionMatches($condition, $context, $segments)) {
                     $allMatch = false;
                     break;
                 }
@@ -40,10 +43,34 @@ final class RuleEvaluator
     }
 
     /**
-     * @param  array{attr?: string, op?: string, value?: mixed}  $condition
+     * @param  array<string, mixed>  $condition
+     * @param  array<string, mixed>  $context
+     * @param  array<string, list<array<string, mixed>>>  $segments
+     */
+    private function conditionMatches(array $condition, array $context, array $segments): bool
+    {
+        if (isset($condition['segment'])) {
+            $conditions = $segments[$condition['segment']] ?? null;
+            if ($conditions === null) {
+                return false;
+            }
+            foreach ($conditions as $inner) {
+                if (! $this->attributeMatches($inner, $context)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $this->attributeMatches($condition, $context);
+    }
+
+    /**
+     * @param  array<string, mixed>  $condition
      * @param  array<string, mixed>  $context
      */
-    private function conditionMatches(array $condition, array $context): bool
+    private function attributeMatches(array $condition, array $context): bool
     {
         $attr = $condition['attr'] ?? null;
         $op = $condition['op'] ?? 'eq';

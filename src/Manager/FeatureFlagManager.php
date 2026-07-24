@@ -10,13 +10,55 @@ use Chemaclass\FeatureFlags\Contracts\FeatureKey;
 use Chemaclass\FeatureFlags\DTO\ExposureStats;
 use Chemaclass\FeatureFlags\DTO\FeatureTransfer;
 use Chemaclass\FeatureFlags\DTO\VariantResult;
+use Chemaclass\FeatureFlags\Repository\CachingFeatureFlagRepository;
+use Chemaclass\FeatureFlags\Targeting\SegmentRepository;
 
 final readonly class FeatureFlagManager
 {
     public function __construct(
         private FeatureFlagRepository $repository,
         private ExposureRecorder $exposures = new ExposureRecorder,
+        private SegmentRepository $segments = new SegmentRepository,
     ) {}
+
+    /**
+     * Define (or update) a reusable targeting segment that flag rules can
+     * reference with `['segment' => $name]`.
+     *
+     * @param  list<array<string, mixed>>  $conditions  list of {attr, op, value}, all AND together
+     */
+    public function defineSegment(string $name, array $conditions, ?string $description = null): void
+    {
+        $this->segments->define($name, $conditions, $description);
+        $this->invalidateEvaluationCache();
+    }
+
+    public function deleteSegment(string $name): bool
+    {
+        $deleted = $this->segments->delete($name);
+        $this->invalidateEvaluationCache();
+
+        return $deleted;
+    }
+
+    /**
+     * A segment change affects any flag that references it, so drop cached
+     * evaluations the same way a flag write does.
+     */
+    private function invalidateEvaluationCache(): void
+    {
+        if ($this->repository instanceof CachingFeatureFlagRepository) {
+            $this->repository->invalidate();
+        }
+    }
+
+    /**
+     * @return array<string, list<array<string, mixed>>> name => conditions
+     */
+    public function segments(): array
+    {
+        return $this->segments->all();
+    }
 
     /**
      * @param  array<string, mixed>  $context  Attributes for targeting rules.

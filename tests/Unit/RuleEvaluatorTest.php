@@ -42,6 +42,34 @@ it('missing attribute never throws and fails the condition', function (): void {
     expect($this->eval->matches($rules, []))->toBeNull();
 });
 
+it('matches a rule that references a segment', function (): void {
+    $rules = [['when' => [['segment' => 'eu-pro']], 'then' => true]];
+    $segments = [
+        'eu-pro' => [
+            ['attr' => 'plan', 'op' => 'eq', 'value' => 'pro'],
+            ['attr' => 'country', 'op' => 'in', 'value' => ['DE', 'AT']],
+        ],
+    ];
+
+    expect($this->eval->matches($rules, ['plan' => 'pro', 'country' => 'DE'], $segments))->toBeTrue()
+        ->and($this->eval->matches($rules, ['plan' => 'pro', 'country' => 'US'], $segments))->toBeNull()
+        ->and($this->eval->matches($rules, ['plan' => 'free', 'country' => 'DE'], $segments))->toBeNull();
+});
+
+it('combines a segment reference with an attribute condition', function (): void {
+    $rules = [['when' => [['segment' => 's'], ['attr' => 'beta', 'op' => 'eq', 'value' => true]], 'then' => true]];
+    $segments = ['s' => [['attr' => 'plan', 'op' => 'eq', 'value' => 'pro']]];
+
+    expect($this->eval->matches($rules, ['plan' => 'pro', 'beta' => true], $segments))->toBeTrue()
+        ->and($this->eval->matches($rules, ['plan' => 'pro', 'beta' => false], $segments))->toBeNull();
+});
+
+it('treats an unknown segment reference as no match', function (): void {
+    $rules = [['when' => [['segment' => 'missing']], 'then' => true]];
+
+    expect($this->eval->matches($rules, ['plan' => 'pro'], []))->toBeNull();
+});
+
 it('supports every operator', function (string $op, mixed $value, mixed $actual, bool $expected): void {
     $rules = [['when' => [['attr' => 'x', 'op' => $op, 'value' => $value]], 'then' => true]];
 

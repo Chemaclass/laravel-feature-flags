@@ -26,6 +26,7 @@ use Chemaclass\FeatureFlags\Pennant\FeatureFlagsPennantDriver;
 use Chemaclass\FeatureFlags\Repository\CachingFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Repository\EloquentFeatureFlagRepository;
 use Chemaclass\FeatureFlags\Resolvers\NullScopeResolver;
+use Chemaclass\FeatureFlags\Targeting\SegmentRepository;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
@@ -57,6 +58,7 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
             return $app->make($cls);
         });
 
+        $this->app->singleton(SegmentRepository::class);
         $this->app->singleton(FeatureFlagManager::class);
     }
 
