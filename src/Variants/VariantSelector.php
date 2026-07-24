@@ -36,14 +36,18 @@ final class VariantSelector
         // are independent for the same key+scope.
         $point = (crc32('variant:'.$key.':'.($scopeId ?? '')) % 10000) / 10000 * $total;
 
+        // Default to the last variant; the loop reassigns to the bucket the point
+        // falls into. A single return keeps the branch fully exercised.
+        $selected = $valid[array_key_last($valid)]['name'];
         $cursor = 0.0;
         foreach ($valid as $variant) {
             $cursor += $variant['weight'];
             if ($point < $cursor) {
-                return $variant['name'];
+                $selected = $variant['name'];
+                break;
             }
         }
 
-        return $valid[array_key_last($valid)]['name'];
+        return $selected;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Chemaclass\FeatureFlags\Manager\FeatureFlagManager;
 use Chemaclass\FeatureFlags\Models\FeatureFlag;
+use Chemaclass\FeatureFlags\Models\FeatureFlagAudit;
 use Workbench\App\Models\User;
 
 beforeEach(function (): void {
@@ -181,4 +182,54 @@ it('store validates required fields', function (): void {
         ->postJson('/admin/feature-flags', [])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['key', 'value']);
+});
+
+it('index shows the audit history when auditing is enabled', function (): void {
+    config()->set('feature-flags.audit.enabled', true);
+    app(FeatureFlagManager::class)->create(['key' => 'mu', 'scope_id' => null, 'value' => true]);
+    FeatureFlagAudit::query()->create([
+        'key' => 'mu', 'scope_id' => null, 'action' => 'toggled',
+        'old_value' => false, 'new_value' => true, 'actor' => 'user-1',
+    ]);
+
+    $this->actingAs($this->user)->get('/admin/feature-flags')
+        ->assertOk()
+        ->assertSee('History');
+});
+
+it('store without JSON redirects back', function (): void {
+    $this->actingAs($this->user)
+        ->from('/admin/feature-flags')
+        ->post('/admin/feature-flags', ['key' => 'nu', 'value' => true])
+        ->assertRedirect('/admin/feature-flags');
+
+    expect(FeatureFlag::query()->where('key', 'nu')->exists())->toBeTrue();
+});
+
+it('update without JSON redirects back (and on missing flag)', function (): void {
+    $row = FeatureFlag::query()->create(['key' => 'xi', 'scope_id' => null, 'value' => true]);
+
+    $this->actingAs($this->user)->from('/admin/feature-flags')
+        ->patch("/admin/feature-flags/{$row->id}", ['hint' => 'redir'])
+        ->assertRedirect('/admin/feature-flags');
+
+    $this->actingAs($this->user)->from('/admin/feature-flags')
+        ->patch('/admin/feature-flags/01ZZZZZZZZZZZZZZZZZZZZZZZZ', ['hint' => 'x'])
+        ->assertRedirect('/admin/feature-flags');
+});
+
+it('destroy without JSON redirects back', function (): void {
+    $row = FeatureFlag::query()->create(['key' => 'omicron', 'scope_id' => null, 'value' => true]);
+
+    $this->actingAs($this->user)->from('/admin/feature-flags')
+        ->delete("/admin/feature-flags/{$row->id}")
+        ->assertRedirect('/admin/feature-flags');
+
+    expect(FeatureFlag::query()->find($row->id))->toBeNull();
+});
+
+it('toggle-dev (row) returns 404 for a missing id', function (): void {
+    $this->actingAs($this->user)
+        ->postJson('/admin/feature-flags/01ZZZZZZZZZZZZZZZZZZZZZZZZ/toggle-dev')
+        ->assertStatus(404);
 });

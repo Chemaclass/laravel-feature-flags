@@ -127,10 +127,7 @@ final class FeatureFlagsServiceProvider extends ServiceProvider
      */
     private function registerPennantDriver(): void
     {
-        if (! (bool) config('feature-flags.pennant.enabled', false)) {
-            return;
-        }
-        if (! class_exists(Feature::class)) {
+        if (! (bool) config('feature-flags.pennant.enabled', false) || ! class_exists(Feature::class)) {
             return;
         }
 
